@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>CLAIR — Анализ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Inter", sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: #1E1F26;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      width: 95%;
+      height: 95%;
+      max-width: 1400px;
+      background: #f3f3ff;
+      border-radius: 25px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .search-filters {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .local-search {
+      flex: 1;
+      max-width: 300px;
+    }
+
+    .local-search input {
+      width: 100%;
+      padding: 8px 14px;
+      border-radius: 20px;
+      border: 2px solid #cdd3ff;
+      outline: none;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    .local-search input:focus {
+      border-color: #2e44ff;
+    }
+
+    .filters {
+      display: flex;
+      gap: 12px;
+    }
+
+    .filters button {
+      background: #2e44ff;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .filters button:hover {
+      background: #1a2ecc;
+    }
+
+    .complaints {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .complaint-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      font-size: 15px;
+      color: #333;
+    }
+
+    .complaint-card strong {
+      display: block;
+      margin-bottom: 6px;
+      color: #2e44ff;
+    }
+
+    .footer {
+      text-align: center;
+      opacity: 0.3;
+      padding: 10px 0;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body class="analysis-page">
+
+  <div class="container">
+
+    <div id="header"></div>
+    <script>
+      fetch("../main/partials/header.html")
+        .then(r => r.text())
+        .then(html => {
+          document.getElementById("header").innerHTML = html;
+        });
+    </script>
+
+    <main>
+      <div class="search-filters">
+        <div class="local-search">
+          <input type="text" placeholder="Поиск">
+        </div>
+
+        <div class="filters">
+          <button>критика</button>
+          <button>обращение</button>
+          <button>предложение</button>
+          <button>ошибки</button>
+        </div>
+      </div>
+
+      <div class="complaints">
+        <div class="complaint-card">
+          <strong>Ошибка №1</strong>
+          Проблема переводов на другие банки: пользователи не могут ввести данные
+        </div>
+        <div class="complaint-card">
+          <strong>Ошибка №2</strong>
+          Проблема переводов на другие банки: пользователи не могут ввести данные
+        </div>
+      </div>
+    </main>
+
+
+
+  </div>
+
+</body>
+
+</html>

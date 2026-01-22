@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>CLAIR — Картография</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Inter", sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: #1E1F26;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      width: 95%;
+      height: 95%;
+      max-width: 1400px;
+      background: #f3f3ff;
+      border-radius: 25px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 20px;
+      gap: 20px;
+      overflow-y: auto;
+      /* чтобы всё оставалось внутри main */
+    }
+
+    .page-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: #2e44ff;
+    }
+
+    .page-description {
+      font-size: 14px;
+      color: #333;
+      text-align: center;
+      max-width: 1000px;
+    }
+
+    /* фильтры */
+    .filters {
+      width: 100%;
+      max-width: 1000px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: space-between;
+    }
+
+    .filter-item {
+      flex: 1 1 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-item label {
+      font-size: 13px;
+      color: #2e44ff;
+      font-weight: 600;
+    }
+
+    .filter-item select {
+      padding: 8px;
+      border-radius: 20px;
+      border: 2px solid #cdd3ff;
+      background: #fff;
+      color: #111;
+      outline: none;
+    }
+
+    .filter-item select:focus {
+      border-color: #2e44ff;
+    }
+
+    .type-chips {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      color: #fff;
+      cursor: pointer;
+      user-select: none;
+      opacity: 0.5;
+    }
+
+    .chip.active {
+      opacity: 1;
+    }
+
+    .chip.red {
+      background: #ef4444;
+    }
+
+    /* Ошибки */
+    .chip.orange {
+      background: #f59e0b;
+    }
+
+    /* Критика */
+    .chip.green {
+      background: #22c55e;
+    }
+
+    /* Предложения */
+    .chip.blue {
+      background: #3b82f6;
+    }
+
+    /* Обращения */
+
+    /* карта */
+    .map-container {
+      width: 100%;
+      max-width: 1000px;
+      background: #fff;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .map-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .map-header h2 {
+      font-size: 16px;
+      color: #2e44ff;
+    }
+
+    .legend {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .legend .chip {
+      cursor: default;
+    }
+
+    .map-placeholder {
+      height: 400px;
+      background: #f3f3ff;
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* точки */
+    .dot {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+    }
+
+    .dot.red {
+      background: #ef4444;
+    }
+
+    .dot.orange {
+      background: #f59e0b;
+    }
+
+    .dot.green {
+      background: #22c55e;
+    }
+
+    .dot.blue {
+      background: #3b82f6;
+    }
+  </style>
+</head>
+
+<body class="cartography-page">
+
+  <div class="container">
+
+    <div id="header"></div>
+    <script>
+      fetch("../main/partials/header.html")
+        .then(r => r.text())
+        .then(html => { document.getElementById("header").innerHTML = html; });
+    </script>
+
+    <main>
+      <h1 class="page-title">Картография</h1>
+      <p class="page-description">
+        Точечная визуализация отзывов и инцидентов. Цвет точки зависит от типа: красный — ошибки, оранжевый — критика,
+        зелёный — предложения, синий — обращения.
+      </p>
+
+      <section class="filters">
+        <div class="filter-item">
+          <label>Типы отзывов</label>
+          <div class="type-chips" id="typeChips">
+            <span class="chip red active" data-type="error">Ошибки</span>
+            <span class="chip orange active" data-type="critique">Критика</span>
+            <span class="chip green active" data-type="proposal">Предложения</span>
+            <span class="chip blue active" data-type="request">Обращения</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="map-container">
+        <div class="map-header">
+          <h2>Мировая карта инцидентов</h2>
+        </div>
+        <div id="map" class="map-placeholder"></div>
+      </section>
+    </main>
+
+    <div id="footer"></div>
+    <script>
+      fetch("../main/partials/footer.html")
+        .then(r => r.text())
+        .then(html => { document.getElementById("footer").innerHTML = html; });
+    </script>
+
+  </div>
+
+  <script>
+    const TYPE_CLASS = { error: 'red', critique: 'orange', proposal: 'green', request: 'blue' };
+    const DATA = [
+      { x: 20, y: 30, type: 'error' },
+      { x: 40, y: 50, type: 'critique' },
+      { x: 60, y: 20, type: 'proposal' },
+      { x: 80, y: 70, type: 'request' }
+    ];
+
+    let activeTypes = new Set(['error', 'critique', 'proposal', 'request']);
+    const mapEl = document.getElementById('map');
+
+    function renderDots() {
+      mapEl.innerHTML = '';
+      DATA.forEach(d => {
+        if (activeTypes.has(d.type)) {
+          const dot = document.createElement('div');
+          dot.className = `dot ${TYPE_CLASS[d.type]}`;
+          dot.style.left = d.x + '%';
+          dot.style.top = d.y + '%';
+          mapEl.appendChild(dot);
+        }
+      });
+    }
+
+    document.getElementById('typeChips').addEventListener('click', e => {
+      const chip = e.target.closest('.chip');
+      if (!chip) return;
+      const type = chip.dataset.type;
+      if (activeTypes.has(type)) {
+        activeTypes.delete(type);
+        chip.classList.remove('active');
+      } else {
+        activeTypes.add(type);
+        chip.classList.add('active');
+      }
+      renderDots();
+    });
+
+    renderDots();
+  </script>
+
+</body>
+
+</html>

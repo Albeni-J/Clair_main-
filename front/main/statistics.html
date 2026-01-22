@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>CLAIR — Статистика</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Inter", sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: #1E1F26;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      width: 95%;
+      height: 95%;
+      max-width: 1400px;
+      background: #f3f3ff;
+      border-radius: 25px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 15px;
+      gap: 15px;
+      width: 100%;
+      overflow-y: auto;
+    }
+
+    .stats-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .stat-card {
+      flex: 1 1 180px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      text-align: center;
+    }
+
+    .stat-card h3 {
+      color: #2e44ff;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .stat-card p {
+      font-size: 15px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    #chart_div {
+      width: 100%;
+      max-width: 1100px;
+      height: 240px;
+      background: #fff;
+      border-radius: 10px;
+      padding: 6px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .stats-table {
+      width: 100%;
+      max-width: 1100px;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      font-size: 12px;
+    }
+
+    .stats-table th,
+    .stats-table td {
+      padding: 6px 10px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+
+    .stats-table th {
+      background: #e6e8ff;
+      color: #2e44ff;
+      font-weight: 600;
+    }
+
+    .stats-table tr:last-child td {
+      border-bottom: none;
+    }
+  </style>
+
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script type="text/javascript">
+    google.charts.load('current', { 'packages': ['corechart'] });
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+      const data = google.visualization.arrayToDataTable([
+        ['Дата', 'Активность'],
+        ['День 1', 100],
+        ['День 2', 120],
+        ['День 3', 90],
+        ['День 4', 140],
+        ['День 5', 160],
+        ['День 6', 130],
+        ['День 7', 170]
+      ]);
+
+      const options = {
+        title: 'Динамика активности (30 дней)',
+        curveType: 'function',
+        legend: { position: 'bottom' },
+        chartArea: { width: '85%', height: '70%' },
+        fontSize: 12
+      };
+
+      const chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+      chart.draw(data, options);
+    }
+  </script>
+</head>
+
+<body class="stats-page">
+
+  <div class="container">
+
+    <div id="header"></div>
+    <script>
+      fetch("../main/partials/header.html")
+        .then(r => r.text())
+        .then(html => { document.getElementById("header").innerHTML = html; });
+    </script>
+
+    <main>
+      <div class="stats-cards">
+        <div class="stat-card">
+          <h3>Активных каналов</h3>
+          <p>1245</p>
+        </div>
+        <div class="stat-card">
+          <h3>Обращений</h3>
+          <p>524</p>
+        </div>
+        <div class="stat-card">
+          <h3>Аномалий</h3>
+          <p>32</p>
+        </div>
+        <div class="stat-card">
+          <h3>Рост за неделю</h3>
+          <p>12%</p>
+        </div>
+      </div>
+
+      <div id="chart_div"></div>
+
+      <table class="stats-table">
+        <thead>
+          <tr>
+            <th>Канал</th>
+            <th>Активность</th>
+            <th>Ошибки</th>
+            <th>Статус</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Telegram</td>
+            <td>82%</td>
+            <td>3</td>
+            <td>OK</td>
+          </tr>
+          <tr>
+            <td>WhatsApp</td>
+            <td>76%</td>
+            <td>7</td>
+            <td>Warning</td>
+          </tr>
+          <tr>
+            <td>Email</td>
+            <td>91%</td>
+            <td>1</td>
+            <td>OK</td>
+          </tr>
+        </tbody>
+      </table>
+    </main>
+
+    <div id="footer"></div>
+    <script>
+      fetch("../main/partials/footer.html")
+        .then(r => r.text())
+        .then(html => { document.getElementById("footer").innerHTML = html; });
+    </script>
+
+  </div>
+
+</body>
+
+</html>
