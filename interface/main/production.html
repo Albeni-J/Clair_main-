@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Production</title>
+
+    <link rel="stylesheet" href="../assets/css/style.css">
+</head>
+
+<body class="production-page">
+
+<div class="container">
+
+    <div id="header"></div>
+
+    <script>
+        fetch("../main/partials/header.html")
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById("header").innerHTML = html;
+            });
+    </script>
+
+
+    <main>
+
+        <div class="production-grid">
+
+            <div class="production-card">
+                <h3>Заголовок 1</h3>
+            </div>
+
+            <div class="production-card">
+                <h3>Заголовок 2</h3>
+            </div>
+
+            <div class="production-card">
+                <h3>Заголовок 3</h3>
+            </div>
+
+            <div class="production-card production-card-wide">
+                <h3>Заголовок 4</h3>
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <div id="footer"></div>
+
+    <script>
+        fetch("footer.html")
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById("footer").innerHTML = html;
+            });
+    </script>
+
+</div>
+
+</body>
+</html>

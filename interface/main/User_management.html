@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>CLAIR — Управление пользователями</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Inter", sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: #1E1F26;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      width: 95%;
+      height: 95%;
+      max-width: 1400px;
+      background: #f3f3ff;
+      border-radius: 25px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .users-block {
+      width: 100%;
+      max-width: 1000px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .add-btn {
+      background: #2e44ff;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .add-btn:hover {
+      background: #1a2ecc;
+    }
+
+    .users-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .users-table th,
+    .users-table td {
+      padding: 14px 18px;
+      text-align: left;
+      font-size: 14px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .users-table th {
+      background: #e6e8ff;
+      font-weight: 600;
+      color: #2e44ff;
+    }
+
+    .users-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .delete-btn {
+      background: #ff3b3b;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 9px 18px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .delete-btn:hover {
+      background: #d92c2c;
+    }
+
+    .footer {
+      text-align: center;
+      opacity: 0.3;
+      padding: 10px 0;
+      font-size: 13px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(205, 205, 205, 0.3);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-window {
+      background: #fff;
+      border-radius: 20px;
+      padding: 30px;
+      width: 420px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .modal-window h2 {
+      margin-bottom: 20px;
+      color: #2e44ff;
+    }
+
+    .modal-window input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .modal-window button {
+      background: #2e44ff;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-top: 10px;
+    }
+
+    .modal-window button:hover {
+      background: #1a2ecc;
+    }
+
+    .close-btn {
+      background: #aaa;
+    }
+
+    .close-btn:hover {
+      background: #888;
+    }
+
+    .warning {
+      color: #d92c2c;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+
+    .error {
+      color: #d92c2c;
+      font-size: 13px;
+      margin: 6px 0 2px;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+
+<body class="users-page">
+
+  <div class="container">
+
+    <div id="header"></div>
+    <script>
+      fetch("../main/partials/header.html")
+        .then(r => r.text())
+        .then(html => {
+          document.getElementById("header").innerHTML = html;
+        });
+    </script>
+
+    <main>
+      <div class="users-block">
+        <button class="add-btn" id="openInvite">Добавить администратора +</button>
+      
+        <table class="users-table" id="usersTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>ФИО</th>
+              <th>Права</th>
+              <th>Действие</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-user="1">
+              <td>1</td>
+              <td>Sailaukhan T.R.</td>
+              <td>Super Admin</td>
+              <td><button class="delete-btn">Удалить</button></td>
+            </tr>
+            <tr data-user="2">
+              <td>2</td>
+              <td>Zhumataev B.S.</td>
+              <td>Admin</td>
+              <td><button class="delete-btn">Удалить</button></td>
+            </tr>
+            <tr data-user="3">
+              <td>3</td>
+              <td>Saginganov A.E.</td>
+              <td>Admin</td>
+              <td><button class="delete-btn">Удалить</button></td>
+            </tr>
+            <tr data-user="4">
+              <td>4</td>
+              <td>Sailaukhan J.R.</td>
+              <td>Admin</td>
+              <td><button class="delete-btn">Удалить</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <div id="footer"></div>
+    <script>
+      fetch("../main/partials/footer.html")
+        .then(r => r.text())
+        .then(html => {
+          document.getElementById("footer").innerHTML = html;
+        });
+    </script>
+
+  </div>
+
+  <div class="modal-overlay" id="inviteModal">
+    <div class="modal-window">
+      <div id="inviteStep1">
+        <h2>Пригласить администратора</h2>
+        <input type="email" id="inviteEmail" placeholder="Электронная почта">
+        <input type="text" id="inviteName" placeholder="ФИО или Организация">
+        <div class="error" id="inviteError1" style="display:none;">Заполните email и имя/организацию</div>
+        <button id="inviteToStep2">Приглашение</button>
+        <button class="close-btn" id="inviteClose1">Закрыть</button>
+      </div>
+      <div id="inviteStep2" style="display:none;">
+        <h2>Пригласить администратора</h2>
+        <input type="text" id="inviteCode" placeholder="Введите код отправленный на почту">
+        <div class="error" id="inviteError2" style="display:none;">Вы ввели неверный код</div>
+        <p class="hint">Не пришёл код? <a href="#" id="inviteResend">Отправить повторно</a></p>
+        <button id="inviteToStep3">Добавить</button>
+        <button class="close-btn" id="inviteClose2">Закрыть</button>
+      </div>
+      <div id="inviteStep3" style="display:none;">
+        <h2>Пригласить администратора</h2>
+        <p style="color:green;font-weight:600;">Приглашение отправлено!</p>
+        <button id="inviteBack">Назад к списку пользователей</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal-window">
+      <div id="deleteStep1">
+        <h2>Удаление пользователя</h2>
+        <input type="email" id="deleteEmail" placeholder="Введите электронную почту">
+        <div class="error" id="deleteError1" style="display:none;">Введите корректный email</div>
+        <button id="deleteToStep2">Отправить код подтверждения</button>
+        <p class="warning">Предупреждение:<br>Вы собираетесь удалить пользователя из системы. Это действие необратимо.
+        </p>
+        <button class="close-btn" id="deleteClose1">Назад к списку Пользователей</button>
+      </div>
+      <div id="deleteStep2" style="display:none;">
+        <h2>Удаление пользователя</h2>
+        <input type="text" id="deleteCode" placeholder="Введите код отправленный на почту">
+        <div class="error" id="deleteError2" style="display:none;">Вы ввели неверный код</div>
+        <p class="hint">Не пришёл код? <a href="#" id="deleteResend">Отправить повторно</a></p>
+        <button id="deleteConfirm">Удалить пользователя</button>
+        <button class="close-btn" id="deleteClose2">Назад к списку Пользователей</button>
+      </div>
+      <div id="deleteStep3" style="display:none;">
+        <h2>Удаление пользователя</h2>
+        <p style="color:red;font-weight:600;">Пользователь удалён!</p>
+        <button id="deleteBack">Назад к списку Пользователей</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Invite modal elements
+      const inviteModal = document.getElementById('inviteModal');
+      const inviteStep1 = document.getElementById('inviteStep1');
+      const inviteStep2 = document.getElementById('inviteStep2');
+      const inviteStep3 = document.getElementById('inviteStep3');
+      const inviteEmail = document.getElementById('inviteEmail');
+      const inviteName = document.getElementById('inviteName');
+      const inviteCode = document.getElementById('inviteCode');
+      const inviteError1 = document.getElementById('inviteError1');
+      const inviteError2 = document.getElementById('inviteError2');
+
+      const openInvite = document.getElementById('openInvite');
+      const inviteToStep2 = document.getElementById('inviteToStep2');
+      const inviteToStep3 = document.getElementById('inviteToStep3');
+      const inviteBack = document.getElementById('inviteBack');
+      const inviteClose1 = document.getElementById('inviteClose1');
+      const inviteClose2 = document.getElementById('inviteClose2');
+      const inviteResend = document.getElementById('inviteResend');
+
+      // Delete modal elements
+      const deleteModal = document.getElementById('deleteModal');
+      const deleteStep1 = document.getElementById('deleteStep1');
+      const deleteStep2 = document.getElementById('deleteStep2');
+      const deleteStep3 = document.getElementById('deleteStep3');
+      const deleteEmail = document.getElementById('deleteEmail');
+      const deleteCode = document.getElementById('deleteCode');
+      const deleteError1 = document.getElementById('deleteError1');
+      const deleteError2 = document.getElementById('deleteError2');
+      const deleteToStep2 = document.getElementById('deleteToStep2');
+      const deleteConfirm = document.getElementById('deleteConfirm');
+      const deleteBack = document.getElementById('deleteBack');
+      const deleteClose1 = document.getElementById('deleteClose1');
+      const deleteClose2 = document.getElementById('deleteClose2');
+      const deleteResend = document.getElementById('deleteResend');
+
+      // Users table (for delete button delegation)
+      const usersTable = document.getElementById('usersTable');
+
+      // Helpers
+      function openModal(modalEl) { modalEl.classList.add('active'); }
+      function closeModal(modalEl) { modalEl.classList.remove('active'); }
+      function resetInvite() {
+        inviteStep1.style.display = 'block';
+        inviteStep2.style.display = 'none';
+        inviteStep3.style.display = 'none';
+        inviteEmail.value = ''; inviteName.value = ''; inviteCode.value = '';
+        inviteError1.style.display = 'none'; inviteError2.style.display = 'none';
+      }
+      function resetDelete() {
+        deleteStep1.style.display = 'block';
+        deleteStep2.style.display = 'none';
+        deleteStep3.style.display = 'none';
+        deleteEmail.value = ''; deleteCode.value = '';
+        deleteError1.style.display = 'none'; deleteError2.style.display = 'none';
+      }
+      function isEmailValid(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      }
+
+      // Open invite modal
+      openInvite.addEventListener('click', () => { resetInvite(); openModal(inviteModal); });
+
+      // Invite: step1 -> step2 (validate email+name)
+      inviteToStep2.addEventListener('click', () => {
+        const ok = isEmailValid(inviteEmail.value.trim()) && inviteName.value.trim().length > 1;
+        if (!ok) {
+          inviteError1.style.display = 'block';
+          return;
+        }
+        inviteError1.style.display = 'none';
+        inviteStep1.style.display = 'none';
+        inviteStep2.style.display = 'block';
+      });
+
+      // Invite: step2 -> step3 (simulate code check)
+      inviteToStep3.addEventListener('click', () => {
+        if (inviteCode.value.trim().length < 4) {
+          inviteError2.style.display = 'block';
+          return;
+        }
+        inviteError2.style.display = 'none';
+        inviteStep2.style.display = 'none';
+        inviteStep3.style.display = 'block';
+      });
+
+      // Invite: resend code (mock)
+      inviteResend.addEventListener('click', (e) => { e.preventDefault(); inviteError2.style.display = 'none'; });
+
+      // Invite: back (close)
+      inviteBack.addEventListener('click', () => { closeModal(inviteModal); });
+
+      // Invite: close buttons
+      inviteClose1.addEventListener('click', () => closeModal(inviteModal));
+      inviteClose2.addEventListener('click', () => closeModal(inviteModal));
+
+      // Delegated open delete modal (any delete button in table)
+      usersTable.addEventListener('click', (e) => {
+        const btn = e.target.closest('.delete-btn');
+        if (!btn) return;
+        // Could capture user id if needed:
+        // const row = btn.closest('tr'); const userId = row?.dataset.user;
+        resetDelete();
+        openModal(deleteModal);
+      });
+
+      // Delete: step1 -> step2 (validate email)
+      deleteToStep2.addEventListener('click', () => {
+        if (!isEmailValid(deleteEmail.value.trim())) {
+          deleteError1.style.display = 'block';
+          return;
+        }
+        deleteError1.style.display = 'none';
+        deleteStep1.style.display = 'none';
+        deleteStep2.style.display = 'block';
+      });
+
+      // Delete: confirm (check code)
+      deleteConfirm.addEventListener('click', () => {
+        if (deleteCode.value.trim().length < 4) {
+          deleteError2.style.display = 'block';
+          return;
+        }
+        deleteError2.style.display = 'none';
+        deleteStep2.style.display = 'none';
+        deleteStep3.style.display = 'block';
+      });
+
+      // Delete: resend code (mock)
+      deleteResend.addEventListener('click', (e) => { e.preventDefault(); deleteError2.style.display = 'none'; });
+
+      // Delete: back (close)
+      deleteBack.addEventListener('click', () => { closeModal(deleteModal); });
+
+      // Delete: close buttons
+      deleteClose1.addEventListener('click', () => closeModal(deleteModal));
+      deleteClose2.addEventListener('click', () => closeModal(deleteModal));
+    });
+  </script>
+
+</body>
+
+</html>

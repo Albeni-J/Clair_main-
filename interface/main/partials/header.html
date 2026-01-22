@@ -1,0 +1,75 @@
+<style>
+    .header {
+    background: transparent;
+    padding: 20px 0;
+    width: 100%;
+}
+
+.header__top {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.header__top img {
+    height: 24px;
+    object-fit: contain;
+}
+
+.header__middle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+}
+
+.header__ai {
+    width: 90px;
+    cursor: pointer;
+}
+
+.header__search-input {
+    width: 600px;
+    padding: 10px;
+    border-radius: 25px;
+    border: 2px solid #cdd3ff;
+    outline: none;
+    font-size: 14px;
+    background: white;
+}
+
+.header__search-input:focus {
+    border-color: #4a61ff;
+}
+
+.header__profile img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #4a61ff;
+}
+</style>
+<header class="header">
+
+    <div class="header__top">
+         <img src="../assets/logo/logo.svg" alt="logo">
+    </div>
+
+    <div class="header__middle">
+
+     <a href="">
+        <img class="header__ai" src="../assets/img/AI.png" alt="AI">
+     </a>
+
+        <input class="header__search-input"
+               type="text"
+               placeholder="Поиск по личной базе...">
+
+        <div class="header__profile">
+            <img src="../assets/img/profile.png" alt="profile">
+        </div>
+
+    </div>
+    
+</header>

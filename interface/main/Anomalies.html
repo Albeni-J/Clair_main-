@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>CLAIR — Аномалии</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Inter", sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: #1E1F26;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      width: 95%;
+      height: 95%;
+      max-width: 1400px;
+      background: #f3f3ff;
+      border-radius: 25px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 20px;
+      gap: 20px;
+      width: 100%;
+    }
+
+    .filters {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .filters button {
+      background: #e6e8ff;
+      color: #2e44ff;
+      border: none;
+      border-radius: 12px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .filters button:hover {
+      background: #d6d8ff;
+    }
+
+    .anomaly-grid {
+      width: 100%;
+      max-width: 1200px;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-auto-rows: minmax(140px, auto);
+      gap: 14px;
+    }
+
+    .anomaly-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 12px 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .anomaly-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .anomaly-title {
+      font-weight: 700;
+      color: #2e44ff;
+      font-size: 15px;
+    }
+
+    .anomaly-severity {
+      font-size: 13px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 10px;
+    }
+
+    .sev-high {
+      background: #ff3b3b;
+      color: #fff;
+    }
+
+    .sev-medium {
+      background: #ffcc00;
+      color: #333;
+    }
+
+    .sev-low {
+      background: #e6e8ff;
+      color: #2e44ff;
+    }
+
+    .anomaly-info {
+      font-size: 13px;
+      color: #333;
+    }
+
+    .meta-row {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .meta-row .time {
+      color: #999;
+    }
+
+    .footer {
+      text-align: center;
+      opacity: 0.3;
+      padding: 8px 0;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body class="anomalies-page">
+
+  <div class="container">
+
+    <div id="header"></div>
+    <script>
+      fetch("../main/partials/header.html")
+        .then(r => r.text())
+        .then(html => { document.getElementById("header").innerHTML = html; });
+    </script>
+
+    <main>
+      <div class="filters">
+        <button>Все</button>
+        <button>Не опознано</button>
+        <button>Ложная информация</button>
+        <button>Спам</button>
+        <button>Не в тему</button>
+      </div>
+
+      <div class="anomaly-grid">
+        <div class="anomaly-card">
+          <div class="anomaly-top">
+            <div class="anomaly-title">Спам</div>
+            <div class="anomaly-severity sev-high">Высокий</div>
+          </div>
+          <div class="anomaly-info">Массовая рассылка 350 одинаковых сообщений</div>
+          <div class="meta-row">
+            <div class="source">Источник: Telegram</div>
+            <div class="time">12:43 — Сегодня</div>
+          </div>
+        </div>
+
+        <div class="anomaly-card">
+          <div class="anomaly-top">
+            <div class="anomaly-title">Не опознано</div>
+            <div class="anomaly-severity sev-medium">Средний</div>
+          </div>
+          <div class="anomaly-info">Зарегистрировано 24 подозрительных аккаунта</div>
+          <div class="meta-row">
+            <div class="source">Источник: ВКонтакте</div>
+            <div class="time">10:05 — Сегодня</div>
+          </div>
+        </div>
+
+        <div class="anomaly-card">
+          <div class="anomaly-top">
+            <div class="anomaly-title">Ложная информация</div>
+            <div class="anomaly-severity sev-medium">Средний</div>
+          </div>
+          <div class="anomaly-info">Лохотрон, не верьте!</div>
+          <div class="meta-row">
+            <div class="source">Источник: 1xbet</div>
+            <div class="time">11:20 — Сегодня</div>
+          </div>
+        </div>
+
+        <div class="anomaly-card">
+          <div class="anomaly-top">
+            <div class="anomaly-title">Не в тему</div>
+            <div class="anomaly-severity sev-low">Низкий</div>
+          </div>
+          <div class="anomaly-info">Сообщение не относится к обсуждаемой теме</div>
+          <div class="meta-row">
+            <div class="source">Источник: Форум</div>
+            <div class="time">09:30 — Сегодня</div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <div id="footer"></div>
+    <script>
+      fetch("../main/partials/footer.html")
+        .then(r => r.text())
+        .then(html => { document.getElementById("footer").innerHTML = html; });
+    </script>
+
+  </div>
+
+</body>
+
+</html>

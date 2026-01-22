@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <title>CLAIR — Управление ключами</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Inter", sans-serif;
+    }
+
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background: #1E1F26;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      width: 95%;
+      height: 95%;
+      max-width: 1400px;
+      background: #f3f3ff;
+      border-radius: 25px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .keys-block {
+      width: 100%;
+      max-width: 1000px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .add-btn {
+      background: #2e44ff;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 10px 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .add-btn:hover {
+      background: #1a2ecc;
+    }
+
+    .keys-list {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .key-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 14px 18px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .key-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .key-info strong {
+      color: #2e44ff;
+    }
+
+    .key-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .delete-btn {
+      background: #ff3b3b;
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .delete-btn:hover {
+      background: #d92c2c;
+    }
+
+    .copy-btn {
+      background: #e6e8ff;
+      color: #2e44ff;
+      border: none;
+      border-radius: 16px;
+      padding: 8px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: #d6d8ff;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(205, 205, 205, 0.3);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-window {
+      background: #fff;
+      border-radius: 20px;
+      padding: 30px;
+      width: 420px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+      text-align: center;
+    }
+
+    .modal-window h2 {
+      margin-bottom: 20px;
+      color: #2e44ff;
+    }
+
+    .modal-window input,
+    .modal-window select,
+    .modal-window textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .modal-window button {
+      background: #2e44ff;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      margin-top: 8px;
+    }
+
+    .modal-window button:hover {
+      background: #1a2ecc;
+    }
+
+    .close-btn {
+      background: #aaa;
+    }
+
+    .close-btn:hover {
+      background: #888;
+    }
+
+    .error {
+      color: #d92c2c;
+      font-size: 13px;
+      margin: 6px 0 2px;
+      display: none;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .warning {
+      color: #d92c2c;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+
+<body class="keys-page">
+
+  <div class="container">
+
+    <div id="header"></div>
+    <script>
+      fetch("../main/partials/header.html")
+        .then(r => r.text())
+        .then(html => { document.getElementById("header").innerHTML = html; });
+    </script>
+
+    <main>
+      <div class="keys-block">
+        <button class="add-btn" id="openAddKey">Добавить ключ +</button>
+
+        <div class="keys-list" id="keysList">
+          <div class="key-card" data-key="1">
+            <div class="key-info">
+              <strong>Key 1</strong>
+              Токен: TFy4LnqfSYfSQ6XxBY7GErHkwBfppzGYXS
+            </div>
+            <div class="key-actions">
+              <button class="copy-btn">Скопировать</button>
+              <button class="delete-btn">Удалить</button>
+            </div>
+          </div>
+
+          <div class="key-card" data-key="2">
+            <div class="key-info">
+              <strong>Key 2</strong>
+              Токен: TFy4LnqfSYfSQ6XxBY7GErHkwBfppzGYXS
+            </div>
+            <div class="key-actions">
+              <button class="copy-btn">Скопировать</button>
+              <button class="delete-btn">Удалить</button>
+            </div>
+          </div>
+
+          <div class="key-card" data-key="3">
+            <div class="key-info">
+              <strong>Key 3</strong>
+              Токен: TFy4LnqfSYfSQ6XxBY7GErHkwBfppzGYXS
+            </div>
+            <div class="key-actions">
+              <button class="copy-btn">Скопировать</button>
+              <button class="delete-btn">Удалить</button>
+            </div>
+          </div>
+
+          <div class="key-card" data-key="4">
+            <div class="key-info">
+              <strong>Key 4</strong>
+              Токен: TFy4LnqfSYfSQ6XxBY7GErHkwBfppzGYXS
+            </div>
+            <div class="key-actions">
+              <button class="copy-btn">Скопировать</button>
+              <button class="delete-btn">Удалить</button>
+            </div>
+          </div>
+
+          <div class="key-card" data-key="5">
+            <div class="key-info">
+              <strong>Key 5</strong>
+              Токен: TFy4LnqfSYfSQ6XxBY7GErHkwBfppzGYXS
+            </div>
+            <div class="key-actions">
+              <button class="copy-btn">Скопировать</button>
+              <button class="delete-btn">Удалить</button>
+            </div>
+          </div>
+
+          <div class="key-card" data-key="6">
+            <div class="key-info">
+              <strong>Key 6</strong>
+              Токен: TFy4LnqfSYfSQ6XxBY7GErHkwBfppzGYXS
+            </div>
+            <div class="key-actions">
+              <button class="copy-btn">Скопировать</button>
+              <button class="delete-btn">Удалить</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+
+  </div>
+
+  <div class="modal-overlay" id="addKeyModal">
+    <div class="modal-window">
+      <div id="addKeyStep1">
+        <h2>Добавить ключ</h2>
+        <input type="text" id="addKeyName" placeholder="Название ключа (например: Key 7)">
+        <textarea id="addKeyToken" placeholder="Токен" rows="3"></textarea>
+        <div class="error" id="addKeyError1">Введите название и токен</div>
+        <button id="addKeyToStep2">Отправить на подтверждение</button>
+        <button class="close-btn" id="addKeyClose1">Отменить</button>
+      </div>
+      <div id="addKeyStep2" style="display:none;">
+        <h2>Подтверждение добавления</h2>
+        <input type="text" id="addKeyCode" placeholder="Введите код отправленный на почту">
+        <div class="error" id="addKeyError2">Вы ввели неверный код</div>
+        <p class="hint">Не пришёл код? <a href="#" id="addKeyResend">Отправить повторно</a></p>
+        <button id="addKeyFinish">Добавить ключ</button>
+        <button class="close-btn" id="addKeyClose2">Отменить</button>
+      </div>
+      <div id="addKeyStep3" style="display:none;">
+        <h2>Добавление ключа</h2>
+        <p style="color:green;font-weight:600;">Ключ успешно добавлен!</p>
+        <button id="addKeyBack">Назад к списку ключей</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="delKeyModal">
+    <div class="modal-window">
+      <div id="delKeyStep1">
+        <h2>Удаление ключа</h2>
+        <input type="text" id="delKeyName" placeholder="Название ключа (например: Key 3)">
+        <div class="warning">Предупреждение:<br>Вы собираетесь удалить ключ. Это действие необратимо.</div>
+        <div class="error" id="delKeyError1">Укажите название ключа</div>
+        <button id="delKeyToStep2">Отправить код подтверждения</button>
+        <button class="close-btn" id="delKeyClose1">Назад к списку ключей</button>
+      </div>
+      <div id="delKeyStep2" style="display:none;">
+        <h2>Удаление ключа</h2>
+        <input type="text" id="delKeyCode" placeholder="Введите код отправленный на почту">
+        <div class="error" id="delKeyError2">Вы ввели неверный код</div>
+        <p class="hint">Не пришёл код? <a href="#" id="delKeyResend">Отправить повторно</a></p>
+        <button id="delKeyConfirm">Удалить ключ</button>
+        <button class="close-btn" id="delKeyClose2">Назад к списку ключей</button>
+      </div>
+      <div id="delKeyStep3" style="display:none;">
+        <h2>Удаление ключа</h2>
+        <p style="color:red;font-weight:600;">Ключ удалён!</p>
+        <button id="delKeyBack">Назад к списку ключей</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const keysList = document.getElementById('keysList');
+
+      /* ====== ADD KEY MODAL ====== */
+      const addKeyModal = document.getElementById('addKeyModal');
+      const openAddKey = document.getElementById('openAddKey');
+      const addKeyStep1 = document.getElementById('addKeyStep1');
+      const addKeyStep2 = document.getElementById('addKeyStep2');
+      const addKeyStep3 = document.getElementById('addKeyStep3');
+      const addKeyName = document.getElementById('addKeyName');
+      const addKeyToken = document.getElementById('addKeyToken');
+      const addKeyCode = document.getElementById('addKeyCode');
+      const addKeyError1 = document.getElementById('addKeyError1');
+      const addKeyError2 = document.getElementById('addKeyError2');
+      const addKeyToStep2 = document.getElementById('addKeyToStep2');
+      const addKeyFinish = document.getElementById('addKeyFinish');
+      const addKeyClose1 = document.getElementById('addKeyClose1');
+      const addKeyClose2 = document.getElementById('addKeyClose2');
+      const addKeyBack = document.getElementById('addKeyBack');
+      const addKeyResend = document.getElementById('addKeyResend');
+
+      function openModal(m) { m.classList.add('active'); }
+      function closeModal(m) { m.classList.remove('active'); }
+      function resetAddKey() {
+        addKeyStep1.style.display = 'block';
+        addKeyStep2.style.display = 'none';
+        addKeyStep3.style.display = 'none';
+        addKeyName.value = '';
+        addKeyToken.value = '';
+        addKeyCode.value = '';
+        addKeyError1.style.display = 'none';
+        addKeyError2.style.display = 'none';
+      }
+
+      openAddKey.addEventListener('click', () => { resetAddKey(); openModal(addKeyModal); });
+
+      addKeyToStep2.addEventListener('click', () => {
+        const nameOk = addKeyName.value.trim().length > 0;
+        const tokenOk = addKeyToken.value.trim().length > 10;
+        if (!nameOk || !tokenOk) { addKeyError1.style.display = 'block'; return; }
+        addKeyError1.style.display = 'none';
+        addKeyStep1.style.display = 'none';
+        addKeyStep2.style.display = 'block';
+      });
+
+      addKeyFinish.addEventListener('click', () => {
+        if (addKeyCode.value.trim().length < 4) { addKeyError2.style.display = 'block'; return; }
+        addKeyError2.style.display = 'none';
+        addKeyStep2.style.display = 'none';
+        addKeyStep3.style.display = 'block';
+
+        // Добавляем карточку ключа в список (демо)
+        const newIndex = keysList.children.length + 1;
+        const card = document.createElement('div');
+        card.className = 'key-card';
+        card.dataset.key = String(newIndex);
+        card.innerHTML = `
+          <div class="key-info">
+            <strong>${addKeyName.value.trim()}</strong>
+            Токен: ${addKeyToken.value.trim()}
+          </div>
+          <div class="key-actions">
+            <button class="copy-btn">Скопировать</button>
+            <button class="delete-btn">Удалить</button>
+          </div>
+        `;
+        keysList.appendChild(card);
+      });
+
+      addKeyResend.addEventListener('click', (e) => { e.preventDefault(); addKeyError2.style.display = 'none'; });
+      addKeyBack.addEventListener('click', () => { closeModal(addKeyModal); });
+      addKeyClose1.addEventListener('click', () => closeModal(addKeyModal));
+      addKeyClose2.addEventListener('click', () => closeModal(addKeyModal));
+
+      /* ====== DELETE KEY MODAL ====== */
+      const delKeyModal = document.getElementById('delKeyModal');
+      const delKeyStep1 = document.getElementById('delKeyStep1');
+      const delKeyStep2 = document.getElementById('delKeyStep2');
+      const delKeyStep3 = document.getElementById('delKeyStep3');
+      const delKeyName = document.getElementById('delKeyName');
+      const delKeyCode = document.getElementById('delKeyCode');
+      const delKeyError1 = document.getElementById('delKeyError1');
+      const delKeyError2 = document.getElementById('delKeyError2');
+      const delKeyToStep2 = document.getElementById('delKeyToStep2');
+      const delKeyConfirm = document.getElementById('delKeyConfirm');
+      const delKeyBack = document.getElementById('delKeyBack');
+      const delKeyClose1 = document.getElementById('delKeyClose1');
+      const delKeyClose2 = document.getElementById('delKeyClose2');
+      const delKeyResend = document.getElementById('delKeyResend');
+
+      function resetDelKey() {
+        delKeyStep1.style.display = 'block';
+        delKeyStep2.style.display = 'none';
+        delKeyStep3.style.display = 'none';
+        delKeyName.value = '';
+        delKeyCode.value = '';
+        delKeyError1.style.display = 'none';
+        delKeyError2.style.display = 'none';
+      }
+
+      // Делегирование: «Удалить» внутри любой карточки открывает модалку удаления
+      keysList.addEventListener('click', (e) => {
+        const delBtn = e.target.closest('.delete-btn');
+        if (!delBtn) return;
+        const card = delBtn.closest('.key-card');
+        const nameText = card.querySelector('.key-info strong')?.textContent || '';
+        resetDelKey();
+        delKeyName.value = nameText; // подставляем название
+        openModal(delKeyModal);
+      });
+
+      delKeyToStep2.addEventListener('click', () => {
+        if (delKeyName.value.trim().length === 0) { delKeyError1.style.display = 'block'; return; }
+        delKeyError1.style.display = 'none';
+        delKeyStep1.style.display = 'none';
+        delKeyStep2.style.display = 'block';
+      });
+
+      delKeyConfirm.addEventListener('click', () => {
+        if (delKeyCode.value.trim().length < 4) { delKeyError2.style.display = 'block'; return; }
+        delKeyError2.style.display = 'none';
+        delKeyStep2.style.display = 'none';
+        delKeyStep3.style.display = 'block';
+
+        // Удаляем карточку из списка (демо)
+        const nameToDel = delKeyName.value.trim();
+        const card = [...keysList.querySelectorAll('.key-card')].find(c => c.querySelector('.key-info strong')?.textContent === nameToDel);
+        if (card) card.remove();
+      });
+
+      delKeyResend.addEventListener('click', (e) => { e.preventDefault(); delKeyError2.style.display = 'none'; });
+      delKeyBack.addEventListener('click', () => { closeModal(delKeyModal); });
+      delKeyClose1.addEventListener('click', () => closeModal(delKeyModal));
+      delKeyClose2.addEventListener('click', () => closeModal(delKeyModal));
+
+      /* ====== COPY TOKEN ====== */
+      keysList.addEventListener('click', async (e) => {
+        const copyBtn = e.target.closest('.copy-btn');
+        if (!copyBtn) return;
+        const card = copyBtn.closest('.key-card');
+        const tokenText = card.querySelector('.key-info')?.innerText.split('Токен: ')[1] || '';
+        try {
+          await navigator.clipboard.writeText(tokenText.trim());
+          copyBtn.textContent = 'Скопировано';
+          setTimeout(() => copyBtn.textContent = 'Скопировать', 1200);
+        } catch {
+          copyBtn.textContent = 'Ошибка';
+          setTimeout(() => copyBtn.textContent = 'Скопировать', 1200);
+        }
+      });
+    });
+  </script>
+
+</body>
+
+</html>
