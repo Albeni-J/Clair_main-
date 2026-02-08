@@ -1,10 +1,19 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import "dotenv/config";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+/**
+ * prompt: string
+ * aiKey: string (ключ владельца из БД/очереди)
+ */
+export async function geminiGenerateJson({ prompt, aiKey }) {
+  const key = typeof aiKey === "string" ? aiKey.trim() : "";
 
-export async function geminiGenerateJson({ prompt }) {
+  if (!key) {
+    throw new Error("aiKey is required (owner Google AI Studio key)");
+  }
+
+  const genAI = new GoogleGenerativeAI(key);
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
   const result = await model.generateContent(prompt);
   return result.response.text();
 }

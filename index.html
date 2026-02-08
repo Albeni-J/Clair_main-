@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Clair API Tester</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 16px; }
+    h1 { margin: 0 0 10px; font-size: 20px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 12px; }
+    .row { display: flex; gap: 10px; }
+    .row > * { flex: 1; }
+    label { display:block; font-size: 12px; margin: 8px 0 4px; color:#444; }
+    input, textarea, button { width: 100%; box-sizing: border-box; }
+    input, textarea { padding: 8px; border: 1px solid #ccc; border-radius: 10px; }
+    textarea { min-height: 70px; resize: vertical; }
+    button { padding: 10px; border: 0; border-radius: 10px; cursor:pointer; margin-top: 10px; }
+    button:hover { filter: brightness(0.97); }
+    pre { background:#0b1020; color:#d8e1ff; padding: 10px; border-radius: 10px; overflow:auto; max-height: 320px; }
+    .small { font-size: 12px; color: #666; margin-top: 6px; line-height: 1.35; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .ok { color: #1a7f37; font-weight: 600; }
+    .bad { color: #b42318; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>Clair API Tester</h1>
+  <div class="small">
+    Base URL: <span class="mono" id="baseLabel"></span><br/>
+    Внешний ingest <b>без JWT</b> (только <span class="mono">cid + X-Channel-Key</span>). Внутренние операции — с JWT.
+  </div>
+
+  <div class="grid" style="margin-top:12px;">
+    <!-- Auth -->
+    <div class="card">
+      <h2 style="margin:0 0 6px; font-size:16px;">Auth</h2>
+
+      <label>JWT (Bearer)</label>
+      <input id="jwt" placeholder="после login сюда подставится токен" />
+
+      <div class="row">
+        <div>
+          <label>username</label>
+          <input id="loginUser" placeholder="например: ali" />
+        </div>
+        <div>
+          <label>password</label>
+          <input id="loginPass" placeholder="например: 123456" type="password" />
+        </div>
+      </div>
+
+      <button onclick="login()">Login → Save JWT</button>
+      <button onclick="me()">GET /api/auth/me</button>
+
+      <div class="small">
+        Если login успешен — JWT сохранится в поле выше и в localStorage.
+      </div>
+    </div>
+
+    <!-- User Gemini Key -->
+    <div class="card">
+      <h2 style="margin:0 0 6px; font-size:16px;">User: Google AI Studio Key</h2>
+
+      <label>gemini_api_key (владельца)</label>
+      <input id="geminiKey" placeholder="AIzaSy..." />
+
+      <button onclick="setGeminiKey()">POST /api/user/gemini-key</button>
+
+      <div class="small">
+        Это ключ владельца. Он будет использоваться для оплаты/лимитов в Google AI Studio.
+      </div>
+    </div>
+
+    <!-- Channels -->
+    <div class="card">
+      <h2 style="margin:0 0 6px; font-size:16px;">Channels</h2>
+
+      <label>Channel name</label>
+      <input id="chName" placeholder="например: Мой сайт" />
+
+      <button onclick="createChannel()">POST /api/channels</button>
+
+      <hr style="border:none; border-top:1px solid #eee; margin:12px 0;">
+
+      <div class="row">
+        <div>
+          <label>cid</label>
+          <input id="chCid" placeholder="например: 12" />
+        </div>
+        <div>
+          <label>channel api_key (для X-Channel-Key)</label>
+          <input id="chApiKey" placeholder="например: channel_key_1234567890" />
+        </div>
+      </div>
+
+      <button onclick="setChannelKey()">PUT /api/channels/:cid/api-key</button>
+
+      <div class="small">
+        <b>Важно:</b> channel api_key — это секрет для внешних сайтов, чтобы они могли отправлять отзывы в твой канал.
+      </div>
+    </div>
+
+    <!-- Appeals Internal -->
+    <div class="card">
+      <h2 style="margin:0 0 6px; font-size:16px;">Appeals (Internal, JWT)</h2>
+
+      <label>cid</label>
+      <input id="intCid" placeholder="например: 12" />
+
+      <label>text</label>
+      <textarea id="intText" placeholder="Отзыв из админки..."></textarea>
+
+      <button onclick="sendInternal()">POST /api/appeals/analyze</button>
+
+      <div class="small">
+        Внутренний путь: проверяет, что канал принадлежит владельцу (JWT), берёт его gemini_api_key и кладёт задачу в RabbitMQ.
+      </div>
+    </div>
+
+    <!-- Appeals External -->
+    <div class="card">
+      <h2 style="margin:0 0 6px; font-size:16px;">Appeals (External, NO JWT)</h2>
+
+      <div class="row">
+        <div>
+          <label>cid</label>
+          <input id="extCid" placeholder="например: 12" />
+        </div>
+        <div>
+          <label>X-Channel-Key</label>
+          <input id="extKey" placeholder="channel api_key" />
+        </div>
+      </div>
+
+      <label>text</label>
+      <textarea id="extText" placeholder="Отзыв пришёл с внешнего сайта..."></textarea>
+
+      <button onclick="sendExternal()">POST /api/ingest/appeal</button>
+
+      <div class="small">
+        Внешний путь: JWT не нужен. Доступ только по <span class="mono">cid + X-Channel-Key</span>.
+      </div>
+    </div>
+  </div>
+
+  <!-- Output -->
+  <div class="card" style="margin-top:14px;">
+    <h2 style="margin:0 0 6px; font-size:16px;">Response / Logs</h2>
+    <div class="small">
+      Последний запрос: <span class="mono" id="lastReq">—</span> |
+      Status: <span id="lastStatus">—</span>
+    </div>
+    <pre id="out">{}</pre>
+  </div>
+
+<script>
+  const BASE = "http://192.168.1.18:3000";
+  document.getElementById("baseLabel").textContent = BASE;
+
+  // restore jwt
+  const savedJwt = localStorage.getItem("clair_jwt");
+  if (savedJwt) document.getElementById("jwt").value = savedJwt;
+
+  function setLast(url, status, ok) {
+    document.getElementById("lastReq").textContent = url;
+    const el = document.getElementById("lastStatus");
+    el.textContent = status;
+    el.className = ok ? "ok" : "bad";
+  }
+
+  function show(obj) {
+    document.getElementById("out").textContent = JSON.stringify(obj, null, 2);
+  }
+
+  async function requestJson(method, path, { headers = {}, body = null } = {}) {
+    const url = BASE + path;
+    const opts = { method, headers: { ...headers } };
+
+    if (body !== null) {
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(body);
+    }
+
+    let res, data;
+    try {
+      res = await fetch(url, opts);
+      const text = await res.text();
+      try { data = text ? JSON.parse(text) : {}; }
+      catch { data = { raw: text }; }
+    } catch (e) {
+      setLast(url, "NETWORK ERROR", false);
+      show({ error: String(e) });
+      return;
+    }
+
+    setLast(url, res.status, res.ok);
+    show(data);
+    return { res, data };
+  }
+
+  function getJwt() {
+    const token = document.getElementById("jwt").value.trim();
+    if (!token) return null;
+    return token;
+  }
+
+  // ===== Auth =====
+  async function login() {
+    const username = document.getElementById("loginUser").value.trim();
+    const password = document.getElementById("loginPass").value;
+
+    const { data } = await requestJson("POST", "/api/auth/login", {
+      body: { username, password }
+    }) || {};
+
+    if (data && data.access_token) {
+      document.getElementById("jwt").value = data.access_token;
+      localStorage.setItem("clair_jwt", data.access_token);
+    }
+  }
+
+  async function me() {
+    const token = getJwt();
+    if (!token) return show({ error: "JWT missing. Login first." });
+
+    await requestJson("GET", "/api/auth/me", {
+      headers: { "Authorization": "Bearer " + token }
+    });
+  }
+
+  // ===== User Gemini Key =====
+  async function setGeminiKey() {
+    const token = getJwt();
+    if (!token) return show({ error: "JWT missing. Login first." });
+
+    const gemini_api_key = document.getElementById("geminiKey").value.trim();
+
+    await requestJson("POST", "/api/user/gemini-key", {
+      headers: { "Authorization": "Bearer " + token },
+      body: { gemini_api_key }
+    });
+  }
+
+  // ===== Channels =====
+  async function createChannel() {
+    const token = getJwt();
+    if (!token) return show({ error: "JWT missing. Login first." });
+
+    const name = document.getElementById("chName").value.trim();
+
+    const r = await requestJson("POST", "/api/channels", {
+      headers: { "Authorization": "Bearer " + token },
+      body: { name }
+    });
+
+    // If your API returns cid, autofill it
+    if (r && r.data) {
+      const cid = r.data.cid || r.data.channel?.cid || r.data.channel?.id;
+      if (cid) document.getElementById("chCid").value = cid;
+    }
+  }
+
+  async function setChannelKey() {
+    const token = getJwt();
+    if (!token) return show({ error: "JWT missing. Login first." });
+
+    const cid = document.getElementById("chCid").value.trim();
+    const api_key = document.getElementById("chApiKey").value.trim();
+    if (!cid) return show({ error: "cid required" });
+
+    await requestJson("PUT", `/api/channels/${encodeURIComponent(cid)}/api-key`, {
+      headers: { "Authorization": "Bearer " + token },
+      body: { api_key }
+    });
+  }
+
+  // ===== Appeals =====
+  async function sendInternal() {
+    const token = getJwt();
+    if (!token) return show({ error: "JWT missing. Login first." });
+
+    const cid = Number(document.getElementById("intCid").value);
+    const text = document.getElementById("intText").value;
+
+    await requestJson("POST", "/api/appeals/analyze", {
+      headers: { "Authorization": "Bearer " + token },
+      body: { cid, text }
+    });
+  }
+
+  async function sendExternal() {
+    const cid = Number(document.getElementById("extCid").value);
+    const text = document.getElementById("extText").value;
+    const key = document.getElementById("extKey").value.trim();
+
+    await requestJson("POST", "/api/ingest/appeal", {
+      headers: { "X-Channel-Key": key },
+      body: { cid, text }
+    });
+  }
+</script>
+</body>
+</html>

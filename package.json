@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "amqplib": "^0.10.9",
     "bcryptjs": "^3.0.3",
     "env": "^0.0.2",
     "gitignore": "^0.7.0",

@@ -1,29 +1,31 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import dotenv from "dotenv";
+import { pool } from "../db.js";
+import { geminiGenerateJson } from "../services/geminiClient.js";
 
-dotenv.config();
-
-const apiKey = process.env.GEMINI_API_KEY;
-const genAI = new GoogleGenerativeAI(apiKey);
-
-export const textGen = async (req, res) => {
+export async function textGen(req, res) {
   try {
-    // нужно получить текст из тела запроса
-    const { text } = req.body;
-    //если текста нет вернуть ошибку
-    if (!text) {
-      return res.status(400).json({ error: "Поле 'text' обязательно" });
+    const userId = req.user?.id;
+    const { text } = req.body || {};
+
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+    if (!text) return res.status(400).json({ error: "text required" });
+
+    const u = await pool.query(
+      `SELECT gemini_api_key FROM clair_users WHERE id=$1`,
+      [userId]
+    );
+
+    const aiKey = u.rows[0]?.gemini_api_key;
+    if (!aiKey) {
+      return res.status(400).json({ error: "Gemini API key not set" });
     }
-    //Если есть текст выполнить перевод через Gemini API крч хуй знает как оно там работает
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const prompt = `генерирую тект и просто отвечай на вопросы: ${text}`;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response.text();
+    const prompt = `Ответь на запрос пользователя:\n${text}`;
 
-    res.json({ response });
-  } catch (error) {
-    console.error("Ошибка при обращении к Gemini API:", error);
-    res.status(500).json({ error: "Ошибка при запросе к Gemini API" });
+    const response = await geminiGenerateJson({ prompt, aiKey });
+
+    return res.json({ response });
+  } catch (e) {
+    console.error("❌ TEXTGEN ERROR:", e);
+    res.status(500).json({ error: e.message });
   }
-};
+}
