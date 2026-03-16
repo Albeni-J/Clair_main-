@@ -1,0 +1,213 @@
+openapi: 3.0.3
+info:
+  title: Clair API
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+tags:
+  - name: Auth
+  - name: Profile
+  - name: Channels
+  - name: Appeals
+  - name: AI
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    channelKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Channel-Key
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+
+    RegisterBody:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string, example: "ali" }
+        password: { type: string, example: "pass1234" }
+        full_name: { type: string, example: "Ali Kabiev" }
+        email: { type: string, example: "ali@mail.com" }
+        tg_push: { type: boolean, example: false }
+
+    LoginBody:
+      type: object
+      required: [username, password]
+      properties:
+        username: { type: string, example: "ali" }
+        password: { type: string, example: "pass1234" }
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, example: "Bearer" }
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        full_name: { type: string, example: "Ali Kabiev" }
+        email: { type: string, example: "ali@mail.com" }
+
+    ChangePasswordBody:
+      type: object
+      required: [current_password, new_password]
+      properties:
+        current_password: { type: string, example: "oldpass123" }
+        new_password: { type: string, example: "newpass123" }
+
+    CreateChannelBody:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, example: "wolt" }
+
+    SetChannelKeyBody:
+      type: object
+      required: [channel_key]
+      properties:
+        channel_key: { type: string, example: "ch_1234567890abcdef" }
+
+    AnalyzeAppealBody:
+      type: object
+      required: [cid, text]
+      properties:
+        cid: { type: integer, example: 12 }
+        text: { type: string, example: "хочу вернуть деньги" }
+
+    IngestAppealBody:
+      type: object
+      required: [text]
+      properties:
+        text: { type: string, example: "хочу вернуть деньги" }
+
+paths:
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RegisterBody" }
+      responses:
+        "201": { description: Created }
+        "400": { description: Bad Request }
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginBody" }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LoginResponse" }
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Me
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200": { description: OK }
+        "401": { description: Unauthorized }
+
+  /api/profile:
+    patch:
+      tags: [Profile]
+      summary: Update profile (full_name/email)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateProfileBody" }
+      responses:
+        "200": { description: OK }
+
+  /api/profile/password:
+    patch:
+      tags: [Profile]
+      summary: Change password
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChangePasswordBody" }
+      responses:
+        "200": { description: OK }
+
+  /api/channels:
+    post:
+      tags: [Channels]
+      summary: Create channel (belongs to JWT user)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateChannelBody" }
+      responses:
+        "201": { description: Created }
+
+  /api/channels/{cid}/key:
+    patch:
+      tags: [Channels]
+      summary: Set/Update channel key (X-Channel-Key value)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: cid
+          in: path
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SetChannelKeyBody" }
+      responses:
+        "200": { description: OK }
+
+  /api/appeals/analyze:
+    post:
+      tags: [Appeals]
+      summary: Internal analyze (JWT) -> pushes to RabbitMQ
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnalyzeAppealBody" }
+      responses:
+        "202": { description: Queued }
+
+  /api/ingest/appeal:
+    post:
+      tags: [Appeals]
+      summary: External ingest (NO JWT) via X-Channel-Key -> pushes to RabbitMQ
+      security: [{ channelKeyAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IngestAppealBody" }
+      responses:
+        "202": { description: Queued }
+        "401": { description: Channel auth missing }

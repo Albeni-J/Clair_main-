@@ -3,32 +3,65 @@ import { SYSTEM_PROMPT } from "../prompts/appealPrompt.js";
 import { geminiGenerateJson } from "../services/geminiClient.js";
 import { safeJsonParse } from "../utils/safeJsonParse.js";
 import { publishToQueue } from "../rabbit.js";
+import { decryptSecret } from "../utils/cryptoKey.js";
+
+/* =========================
+   HELPERS
+========================= */
+async function getUserGeminiKeyOrThrow(userId) {
+  const r = await pool.query(
+    `SELECT gemini_api_key_enc
+     FROM clair_users
+     WHERE id=$1`,
+    [Number(userId)]
+  );
+
+  if (r.rowCount === 0) throw new Error("User not found");
+
+  const enc = r.rows[0]?.gemini_api_key_enc;
+  if (!enc) throw new Error("Gemini API key not set");
+
+  const key = decryptSecret(enc);
+  const cleanKey = typeof key === "string" ? key.trim() : "";
+  if (!cleanKey) throw new Error("Gemini key is empty after decrypt");
+
+  return cleanKey;
+}
+
+function parseRatingOrThrow(value) {
+  const rating = Number(value);
+
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    throw new Error("rating must be an integer from 1 to 5");
+  }
+
+  return rating;
+}
 
 /* =========================
    JOB — вызывается воркером
 ========================= */
-export async function analyzeAndCreateAppealJob({ userId, cid, text, aiKey }) {
-  // 0) нормализуем
+export async function analyzeAndCreateAppealJob({ userId, cid, text, rating }) {
   const uid = Number(userId);
   const channelId = Number(cid);
   const cleanText = typeof text === "string" ? text.trim() : "";
-  const cleanKey = typeof aiKey === "string" ? aiKey.trim() : "";
+  const cleanRating = parseRatingOrThrow(rating);
 
   if (!uid || !channelId || cleanText.length < 2) {
     throw new Error("Invalid job payload (userId/cid/text)");
   }
-  if (!cleanKey) {
-    throw new Error("Gemini key is empty");
-  }
 
-  // 1) 🔐 проверяем что канал принадлежит владельцу
+  // 🔐 Ключ теперь достаём ЗДЕСЬ
+  const cleanKey = await getUserGeminiKeyOrThrow(uid);
+
+  // 1) проверяем что канал принадлежит владельцу
   const ch = await pool.query(
     `SELECT id FROM clair_channels WHERE id=$1 AND uid=$2`,
     [channelId, uid]
   );
   if (ch.rowCount === 0) throw new Error("Channel not found or not yours");
 
-  // 2) 🤖 Gemini
+  // 2) Gemini
   const prompt = `${SYSTEM_PROMPT}\n\nВходной текст:\n${cleanText}`;
 
   let raw = "";
@@ -46,14 +79,12 @@ export async function analyzeAndCreateAppealJob({ userId, cid, text, aiKey }) {
     console.log("===== PARSED DATA =====");
     console.log(data);
     console.log("===== END PARSED =====\n");
-
-  } catch (e) { 
+  } catch (e) {
     console.error("❌ Gemini/parse error:", e?.message || e);
     data = null;
   }
 
-
-  // 3) 🧩 маппинг (поддержка разных ключей на всякий)
+  // 3) mapping
   const appealType = data?.appeal_type ?? data?.type ?? null;
   const status = data?.status ?? "new";
 
@@ -64,28 +95,28 @@ export async function analyzeAndCreateAppealJob({ userId, cid, text, aiKey }) {
   const anomalyComment = data?.anomaly_comment ?? data?.anomaly_com ?? null;
 
   const aiComment =
-  data?.ai_comment ??
-  data?.ai_com ??
-  data?.comment ??
-  (raw ? raw.slice(0, 500) : null); // fallback: первые 500 символов
+    data?.ai_comment ??
+    data?.ai_com ??
+    data?.comment ??
+    (raw ? raw.slice(0, 500) : null);
 
   const aiSolution = data?.ai_solution ?? data?.solution ?? null;
 
-  const isAnomaly = typeof data?.is_anomaly === "boolean"
-    ? data.is_anomaly
-    : (data?.is_anomaly ? true : false);
+  const isAnomaly =
+    typeof data?.is_anomaly === "boolean"
+      ? data.is_anomaly
+      : Boolean(data?.is_anomaly);
 
-  // jsonb поле
-
-  // 4) 💾 INSERT полностью под твою таблицу
+  // 4) INSERT
   const ins = await pool.query(
     `INSERT INTO clair_appeal
       (cid, rating, emotion, type, status, anomaly_type, anomaly_com, ai_com, org_com, text, is_anomaly, ai_solution)
      VALUES
-      ($1, NULL, $2, $3, $4, $5, $6, $7, NULL, $8, $9, $10)
+      ($1, $2, $3, $4, $5, $6, $7, $8, NULL, $9, $10, $11)
      RETURNING *`,
     [
       channelId,
+      cleanRating,
       emotion,
       appealType,
       status,
@@ -107,27 +138,33 @@ export async function analyzeAndCreateAppealJob({ userId, cid, text, aiKey }) {
 export async function analyzeAndCreateAppeal(req, res) {
   try {
     const userId = req.user?.id;
-    const { cid, text } = req.body || {};
+    const { cid, text, rating } = req.body || {};
 
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
     if (!cid || !Number.isInteger(Number(cid))) {
       return res.status(400).json({ error: "cid is required (number)" });
     }
+
     if (!text || typeof text !== "string" || text.trim().length < 2) {
       return res.status(400).json({ error: "text is required" });
     }
 
-    const u = await pool.query(
-      `SELECT gemini_api_key FROM clair_users WHERE id=$1`,
-      [Number(userId)]
-    );
-
-    const aiKey = (u.rows[0]?.gemini_api_key || "").trim();
-    if (!aiKey) return res.status(400).json({ error: "Gemini API key not set" });
+    let cleanRating;
+    try {
+      cleanRating = parseRatingOrThrow(rating);
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
 
     await publishToQueue({
       type: "APPEAL_ANALYZE",
-      data: { userId: Number(userId), cid: Number(cid), text: text.trim(), aiKey },
+      data: {
+        userId: Number(userId),
+        cid: Number(cid),
+        text: text.trim(),
+        rating: cleanRating,
+      },
       createdAt: Date.now(),
     });
 
@@ -143,25 +180,32 @@ export async function analyzeAndCreateAppeal(req, res) {
 ========================= */
 export async function ingestExternalAppeal(req, res) {
   try {
-    const { text } = req.body || {};
+    const { text, rating } = req.body || {};
     const { cid, uid } = req.channel || {};
 
-    if (!cid || !uid) return res.status(401).json({ error: "Channel auth missing" });
+    if (!cid || !uid) {
+      return res.status(401).json({ error: "Channel auth missing" });
+    }
+
     if (!text || typeof text !== "string" || text.trim().length < 2) {
       return res.status(400).json({ error: "text required" });
     }
 
-    const u = await pool.query(
-      `SELECT gemini_api_key FROM clair_users WHERE id=$1`,
-      [Number(uid)]
-    );
-
-    const aiKey = (u.rows[0]?.gemini_api_key || "").trim();
-    if (!aiKey) return res.status(400).json({ error: "Owner Gemini key not set" });
+    let cleanRating;
+    try {
+      cleanRating = parseRatingOrThrow(rating);
+    } catch (e) {
+      return res.status(400).json({ error: e.message });
+    }
 
     await publishToQueue({
       type: "APPEAL_ANALYZE",
-      data: { userId: Number(uid), cid: Number(cid), text: text.trim(), aiKey },
+      data: {
+        userId: Number(uid),
+        cid: Number(cid),
+        text: text.trim(),
+        rating: cleanRating,
+      },
       createdAt: Date.now(),
     });
 

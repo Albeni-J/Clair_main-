@@ -1,304 +1,656 @@
-<!doctype html>
+<!-- <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Clair API Tester</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Clair Test Frontend</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 16px; }
-    h1 { margin: 0 0 10px; font-size: 20px; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .card { border: 1px solid #ddd; border-radius: 12px; padding: 12px; }
-    .row { display: flex; gap: 10px; }
-    .row > * { flex: 1; }
-    label { display:block; font-size: 12px; margin: 8px 0 4px; color:#444; }
-    input, textarea, button { width: 100%; box-sizing: border-box; }
-    input, textarea { padding: 8px; border: 1px solid #ccc; border-radius: 10px; }
-    textarea { min-height: 70px; resize: vertical; }
-    button { padding: 10px; border: 0; border-radius: 10px; cursor:pointer; margin-top: 10px; }
-    button:hover { filter: brightness(0.97); }
-    pre { background:#0b1020; color:#d8e1ff; padding: 10px; border-radius: 10px; overflow:auto; max-height: 320px; }
-    .small { font-size: 12px; color: #666; margin-top: 6px; line-height: 1.35; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    .ok { color: #1a7f37; font-weight: 600; }
-    .bad { color: #b42318; font-weight: 600; }
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #222;
+      padding: 30px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      border: 1px solid #d9dce3;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    input:focus, textarea:focus {
+      border-color: #4f46e5;
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      background: #2563eb;
+      color: white;
+      margin-bottom: 10px;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    .secondary {
+      background: #6b7280;
+    }
+
+    .secondary:hover {
+      background: #4b5563;
+    }
+
+    .result {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      background: #f3f4f6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 13px;
+    }
+
+    .ok {
+      color: #166534;
+      background: #dcfce7;
+    }
+
+    .err {
+      color: #991b1b;
+      background: #fee2e2;
+    }
+
+    .muted {
+      color: #374151;
+      background: #f3f4f6;
+    }
+
+    .token-box {
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      padding: 10px;
+      border-radius: 10px;
+      background: #eef2ff;
+      margin-top: 10px;
+    }
+
+    .channel {
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fafafa;
+    }
+
+    .channel-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .appeal {
+      margin-top: 8px;
+      padding: 10px;
+      border-left: 4px solid #2563eb;
+      background: white;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .small {
+      font-size: 12px;
+      color: #666;
+    }
   </style>
 </head>
 <body>
-  <h1>Clair API Tester</h1>
-  <div class="small">
-    Base URL: <span class="mono" id="baseLabel"></span><br/>
-    Внешний ingest <b>без JWT</b> (только <span class="mono">cid + X-Channel-Key</span>). Внутренние операции — с JWT.
-  </div>
+  <h1>Clair Backend Test</h1>
 
-  <div class="grid" style="margin-top:12px;">
-    <!-- Auth -->
+  <div class="container">
     <div class="card">
-      <h2 style="margin:0 0 6px; font-size:16px;">Auth</h2>
+      <h2>Регистрация</h2>
 
-      <label>JWT (Bearer)</label>
-      <input id="jwt" placeholder="после login сюда подставится токен" />
+      <label for="reg_username">Username</label>
+      <input id="reg_username" placeholder="username" />
 
-      <div class="row">
-        <div>
-          <label>username</label>
-          <input id="loginUser" placeholder="например: ali" />
-        </div>
-        <div>
-          <label>password</label>
-          <input id="loginPass" placeholder="например: 123456" type="password" />
-        </div>
-      </div>
+      <label for="reg_password">Password</label>
+      <input id="reg_password" type="password" placeholder="password" />
 
-      <button onclick="login()">Login → Save JWT</button>
-      <button onclick="me()">GET /api/auth/me</button>
+      <label for="reg_email">Email</label>
+      <input id="reg_email" placeholder="email" />
 
-      <div class="small">
-        Если login успешен — JWT сохранится в поле выше и в localStorage.
-      </div>
+      <button onclick="registerUser()">Register</button>
+
+      <div id="registerResult" class="result muted">Ожидание...</div>
     </div>
 
-    <!-- User Gemini Key -->
     <div class="card">
-      <h2 style="margin:0 0 6px; font-size:16px;">User: Google AI Studio Key</h2>
+      <h2>Логин</h2>
 
-      <label>gemini_api_key (владельца)</label>
-      <input id="geminiKey" placeholder="AIzaSy..." />
+      <label for="login_username">Username</label>
+      <input id="login_username" placeholder="username" />
 
-      <button onclick="setGeminiKey()">POST /api/user/gemini-key</button>
+      <label for="login_password">Password</label>
+      <input id="login_password" type="password" placeholder="password" />
 
-      <div class="small">
-        Это ключ владельца. Он будет использоваться для оплаты/лимитов в Google AI Studio.
-      </div>
+      <button onclick="loginUser()">Login</button>
+      <button class="secondary" onclick="getMe()">Check /me</button>
+      <button class="secondary" onclick="clearToken()">Clear Token</button>
+
+      <div id="loginResult" class="result muted">Ожидание...</div>
+      <div id="meResult" class="result muted">Ожидание...</div>
+      <div id="tokenBox" class="token-box">JWT: not stored</div>
     </div>
 
-    <!-- Channels -->
     <div class="card">
-      <h2 style="margin:0 0 6px; font-size:16px;">Channels</h2>
+      <h2>Отчёты</h2>
+      <div class="small">Путь: GET /api/channels/reports</div>
 
-      <label>Channel name</label>
-      <input id="chName" placeholder="например: Мой сайт" />
+      <button onclick="getReports()">Load Reports</button>
 
-      <button onclick="createChannel()">POST /api/channels</button>
-
-      <hr style="border:none; border-top:1px solid #eee; margin:12px 0;">
-
-      <div class="row">
-        <div>
-          <label>cid</label>
-          <input id="chCid" placeholder="например: 12" />
-        </div>
-        <div>
-          <label>channel api_key (для X-Channel-Key)</label>
-          <input id="chApiKey" placeholder="например: channel_key_1234567890" />
-        </div>
-      </div>
-
-      <button onclick="setChannelKey()">PUT /api/channels/:cid/api-key</button>
-
-      <div class="small">
-        <b>Важно:</b> channel api_key — это секрет для внешних сайтов, чтобы они могли отправлять отзывы в твой канал.
-      </div>
-    </div>
-
-    <!-- Appeals Internal -->
-    <div class="card">
-      <h2 style="margin:0 0 6px; font-size:16px;">Appeals (Internal, JWT)</h2>
-
-      <label>cid</label>
-      <input id="intCid" placeholder="например: 12" />
-
-      <label>text</label>
-      <textarea id="intText" placeholder="Отзыв из админки..."></textarea>
-
-      <button onclick="sendInternal()">POST /api/appeals/analyze</button>
-
-      <div class="small">
-        Внутренний путь: проверяет, что канал принадлежит владельцу (JWT), берёт его gemini_api_key и кладёт задачу в RabbitMQ.
-      </div>
-    </div>
-
-    <!-- Appeals External -->
-    <div class="card">
-      <h2 style="margin:0 0 6px; font-size:16px;">Appeals (External, NO JWT)</h2>
-
-      <div class="row">
-        <div>
-          <label>cid</label>
-          <input id="extCid" placeholder="например: 12" />
-        </div>
-        <div>
-          <label>X-Channel-Key</label>
-          <input id="extKey" placeholder="channel api_key" />
-        </div>
-      </div>
-
-      <label>text</label>
-      <textarea id="extText" placeholder="Отзыв пришёл с внешнего сайта..."></textarea>
-
-      <button onclick="sendExternal()">POST /api/ingest/appeal</button>
-
-      <div class="small">
-        Внешний путь: JWT не нужен. Доступ только по <span class="mono">cid + X-Channel-Key</span>.
-      </div>
+      <div id="reportsResult" class="result muted">Ожидание...</div>
+      <div id="reports"></div>
     </div>
   </div>
 
-  <!-- Output -->
-  <div class="card" style="margin-top:14px;">
-    <h2 style="margin:0 0 6px; font-size:16px;">Response / Logs</h2>
-    <div class="small">
-      Последний запрос: <span class="mono" id="lastReq">—</span> |
-      Status: <span id="lastStatus">—</span>
-    </div>
-    <pre id="out">{}</pre>
-  </div>
+  <script>
+    const AUTH_API = "http://localhost:3000/api/auth";
+    const API = "http://localhost:3000/api";
 
-<script>
-  const BASE = "http://192.168.1.18:3000";
-  document.getElementById("baseLabel").textContent = BASE;
+    renderToken();
 
-  // restore jwt
-  const savedJwt = localStorage.getItem("clair_jwt");
-  if (savedJwt) document.getElementById("jwt").value = savedJwt;
-
-  function setLast(url, status, ok) {
-    document.getElementById("lastReq").textContent = url;
-    const el = document.getElementById("lastStatus");
-    el.textContent = status;
-    el.className = ok ? "ok" : "bad";
-  }
-
-  function show(obj) {
-    document.getElementById("out").textContent = JSON.stringify(obj, null, 2);
-  }
-
-  async function requestJson(method, path, { headers = {}, body = null } = {}) {
-    const url = BASE + path;
-    const opts = { method, headers: { ...headers } };
-
-    if (body !== null) {
-      opts.headers["Content-Type"] = "application/json";
-      opts.body = JSON.stringify(body);
+    function setResult(id, text, type = "muted") {
+      const el = document.getElementById(id);
+      el.className = "result " + type;
+      el.textContent = text;
     }
 
-    let res, data;
-    try {
-      res = await fetch(url, opts);
+    function renderToken() {
+      const token = localStorage.getItem("token");
+      document.getElementById("tokenBox").textContent = token
+        ? "JWT:\n" + token
+        : "JWT: not stored";
+    }
+
+    function clearToken() {
+      localStorage.removeItem("token");
+      renderToken();
+      setResult("loginResult", "Token removed", "ok");
+      setResult("meResult", "Ожидание...", "muted");
+      setResult("reportsResult", "Ожидание...", "muted");
+      document.getElementById("reports").innerHTML = "";
+    }
+
+    async function safeParseResponse(res) {
       const text = await res.text();
-      try { data = text ? JSON.parse(text) : {}; }
-      catch { data = { raw: text }; }
-    } catch (e) {
-      setLast(url, "NETWORK ERROR", false);
-      show({ error: String(e) });
-      return;
+      try {
+        return { ok: res.ok, status: res.status, data: JSON.parse(text) };
+      } catch {
+        return { ok: res.ok, status: res.status, data: text };
+      }
     }
 
-    setLast(url, res.status, res.ok);
-    show(data);
-    return { res, data };
-  }
+    async function registerUser() {
+      const username = document.getElementById("reg_username").value.trim();
+      const password = document.getElementById("reg_password").value.trim();
+      const email = document.getElementById("reg_email").value.trim();
 
-  function getJwt() {
-    const token = document.getElementById("jwt").value.trim();
-    if (!token) return null;
-    return token;
-  }
+      setResult("registerResult", "Loading...", "muted");
 
-  // ===== Auth =====
-  async function login() {
-    const username = document.getElementById("loginUser").value.trim();
-    const password = document.getElementById("loginPass").value;
+      try {
+        const res = await fetch(AUTH_API + "/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            username,
+            password,
+            email
+          })
+        });
 
-    const { data } = await requestJson("POST", "/api/auth/login", {
-      body: { username, password }
-    }) || {};
+        const result = await safeParseResponse(res);
 
-    if (data && data.access_token) {
-      document.getElementById("jwt").value = data.access_token;
-      localStorage.setItem("clair_jwt", data.access_token);
+        if (!result.ok) {
+          setResult(
+            "registerResult",
+            "Register error (" + result.status + "):\n" + JSON.stringify(result.data, null, 2),
+            "err"
+          );
+          return;
+        }
+
+        setResult(
+          "registerResult",
+          "Register success:\n" + JSON.stringify(result.data, null, 2),
+          "ok"
+        );
+      } catch (e) {
+        setResult("registerResult", "Register exception: " + e.message, "err");
+      }
     }
-  }
 
-  async function me() {
-    const token = getJwt();
-    if (!token) return show({ error: "JWT missing. Login first." });
+    async function loginUser() {
+      const username = document.getElementById("login_username").value.trim();
+      const password = document.getElementById("login_password").value.trim();
 
-    await requestJson("GET", "/api/auth/me", {
-      headers: { "Authorization": "Bearer " + token }
-    });
-  }
+      setResult("loginResult", "Loading...", "muted");
 
-  // ===== User Gemini Key =====
-  async function setGeminiKey() {
-    const token = getJwt();
-    if (!token) return show({ error: "JWT missing. Login first." });
+      try {
+        const res = await fetch(AUTH_API + "/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            username,
+            password
+          })
+        });
 
-    const gemini_api_key = document.getElementById("geminiKey").value.trim();
+        const result = await safeParseResponse(res);
 
-    await requestJson("POST", "/api/user/gemini-key", {
-      headers: { "Authorization": "Bearer " + token },
-      body: { gemini_api_key }
-    });
-  }
+        if (!result.ok) {
+          setResult(
+            "loginResult",
+            "Login error (" + result.status + "):\n" + JSON.stringify(result.data, null, 2),
+            "err"
+          );
+          return;
+        }
 
-  // ===== Channels =====
-  async function createChannel() {
-    const token = getJwt();
-    if (!token) return show({ error: "JWT missing. Login first." });
+        if (!result.data || !result.data.access_token) {
+          setResult(
+            "loginResult",
+            "Login success, but access_token not found:\n" + JSON.stringify(result.data, null, 2),
+            "err"
+          );
+          return;
+        }
 
-    const name = document.getElementById("chName").value.trim();
+        localStorage.setItem("token", result.data.access_token);
+        renderToken();
 
-    const r = await requestJson("POST", "/api/channels", {
-      headers: { "Authorization": "Bearer " + token },
-      body: { name }
-    });
-
-    // If your API returns cid, autofill it
-    if (r && r.data) {
-      const cid = r.data.cid || r.data.channel?.cid || r.data.channel?.id;
-      if (cid) document.getElementById("chCid").value = cid;
+        setResult(
+          "loginResult",
+          "Login success:\n" + JSON.stringify(result.data, null, 2),
+          "ok"
+        );
+      } catch (e) {
+        setResult("loginResult", "Login exception: " + e.message, "err");
+      }
     }
-  }
 
-  async function setChannelKey() {
-    const token = getJwt();
-    if (!token) return show({ error: "JWT missing. Login first." });
+    async function getMe() {
+      const token = localStorage.getItem("token");
 
-    const cid = document.getElementById("chCid").value.trim();
-    const api_key = document.getElementById("chApiKey").value.trim();
-    if (!cid) return show({ error: "cid required" });
+      if (!token) {
+        setResult("meResult", "Нет токена. Сначала залогинься.", "err");
+        return;
+      }
 
-    await requestJson("PUT", `/api/channels/${encodeURIComponent(cid)}/api-key`, {
-      headers: { "Authorization": "Bearer " + token },
-      body: { api_key }
+      setResult("meResult", "Loading...", "muted");
+
+      try {
+        const res = await fetch(AUTH_API + "/me", {
+          method: "GET",
+          headers: {
+            "Authorization": "Bearer " + token
+          }
+        });
+
+        const result = await safeParseResponse(res);
+
+        if (!result.ok) {
+          setResult(
+            "meResult",
+            "ME error (" + result.status + "):\n" + JSON.stringify(result.data, null, 2),
+            "err"
+          );
+          return;
+        }
+
+        setResult(
+          "meResult",
+          "ME success:\n" + JSON.stringify(result.data, null, 2),
+          "ok"
+        );
+      } catch (e) {
+        setResult("meResult", "ME exception: " + e.message, "err");
+      }
+    }
+
+    async function getReports() {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        setResult("reportsResult", "Нет токена. Сначала залогинься.", "err");
+        return;
+      }
+
+      setResult("reportsResult", "Loading...", "muted");
+      document.getElementById("reports").innerHTML = "";
+
+      try {
+        const res = await fetch(API + "/channels/reports", {
+          method: "GET",
+          headers: {
+            "Authorization": "Bearer " + token
+          }
+        });
+
+        const result = await safeParseResponse(res);
+
+        if (!result.ok) {
+          setResult(
+            "reportsResult",
+            "Reports error (" + result.status + "):\n" + JSON.stringify(result.data, null, 2),
+            "err"
+          );
+          return;
+        }
+
+        const channels = Array.isArray(result.data.channels) ? result.data.channels : [];
+        renderReports(channels);
+        setResult("reportsResult", "Loaded channels: " + channels.length, "ok");
+      } catch (e) {
+        setResult("reportsResult", "Reports exception: " + e.message, "err");
+      }
+    }
+
+    function renderReports(channels) {
+      const container = document.getElementById("reports");
+      container.innerHTML = "";
+
+      if (!channels.length) {
+        container.innerHTML = "<div class='result muted'>Нет каналов или отзывов</div>";
+        return;
+      }
+
+      channels.forEach(channel => {
+        const channelDiv = document.createElement("div");
+        channelDiv.className = "channel";
+
+        const title = document.createElement("div");
+        title.className = "channel-title";
+        title.innerHTML =
+          "Канал: " + (channel.name || "-") +
+          "<br>ID: " + (channel.id ?? "-") +
+          "<br>Key: " + (channel.channel_key || "-");
+
+        channelDiv.appendChild(title);
+
+        const appeals = Array.isArray(channel.appeals) ? channel.appeals : [];
+
+        if (!appeals.length) {
+          const empty = document.createElement("div");
+          empty.className = "appeal";
+          empty.textContent = "Нет отзывов";
+          channelDiv.appendChild(empty);
+        } else {
+          appeals.forEach(a => {
+            const appealDiv = document.createElement("div");
+            appealDiv.className = "appeal";
+            appealDiv.innerHTML =
+              "<b>Appeal ID:</b> " + (a.id ?? "-") + "<br>" +
+              "<b>Rating:</b> " + (a.rating ?? "-") + "<br>" +
+              "<b>Emotion:</b> " + (a.emotion ?? "-") + "<br>" +
+              "<b>Type:</b> " + (a.type ?? "-") + "<br>" +
+              "<b>Status:</b> " + (a.status ?? "-") + "<br>" +
+              "<b>Anomaly Type:</b> " + (a.anomaly_type ?? "-") + "<br>" +
+              "<b>AI Comment:</b> " + (a.ai_comment ?? "-") + "<br>" +
+              "<b>Org Comment:</b> " + (a.org_comment ?? "-");
+            channelDiv.appendChild(appealDiv);
+          });
+        }
+
+        container.appendChild(channelDiv);
+      });
+    }
+  </script>
+</body>
+</html> -->
+
+
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Регистрация — CLAIR</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/css/auth.css">
+</head>
+
+<body class="auth-page">
+
+  <script src="../scripts/config.js"></script>
+  <script>
+    if (localStorage.getItem("auth_token")) {
+      window.location.href = "../main/home.html";
+    }
+  </script>
+
+  <div class="container">
+    <main>
+      <div class="auth-wrapper">
+        <div class="top-logo">
+          <img src="../assets/logo/logo.svg" alt="CLAIR" />
+        </div>
+
+        <div class="card-auth">
+          <h4><b>Создать аккаунт</b></h4>
+          <div class="subtext">Заполните форму регистрации</div>
+
+          <form id="regForm">
+            <label class="form-label-custom" for="fullname">ФИО / Организация</label>
+            <input id="fullname" class="form-control" type="text" placeholder="Example LTD" required />
+            <div id="fullnameError" class="text-danger" style="font-size: 12px; margin-top: 4px; display: none;"></div>
+
+            <label class="form-label-custom" for="email">Электронная почта</label>
+            <input id="email" class="form-control" type="email" placeholder="example@clair.com" required />
+            <div id="emailError" class="text-danger" style="font-size: 12px; margin-top: 4px; display: none;"></div>
+
+            <label class="form-label-custom" for="password">Пароль</label>
+            <input id="password" class="form-control" type="password" placeholder="****" required minlength="6" />
+            <div id="passwordError" class="text-danger" style="font-size: 12px; margin-top: 4px; display: none;"></div>
+
+            <button id="regBtn" class="btn btn-primary btn-primary-custom mt-3" type="submit">
+              Регистрация
+            </button>
+
+            <button
+              class="btn btn-outline btn-outline-custom mt-2"
+              type="button"
+              onclick="window.location.href='sign-in.html'">
+              Авторизация
+            </button>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const fullnameInput = document.getElementById("fullname");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+
+    const fullnameError = document.getElementById("fullnameError");
+    const emailError = document.getElementById("emailError");
+    const passwordError = document.getElementById("passwordError");
+    const regBtn = document.getElementById("regBtn");
+
+    function clearErrors() {
+      fullnameError.style.display = "none";
+      emailError.style.display = "none";
+      passwordError.style.display = "none";
+
+      fullnameError.textContent = "";
+      emailError.textContent = "";
+      passwordError.textContent = "";
+    }
+
+    function showError(target, message) {
+      target.textContent = message;
+      target.style.display = "block";
+    }
+
+    function setLoading(isLoading) {
+      regBtn.disabled = isLoading;
+      regBtn.textContent = isLoading ? "Загрузка..." : "Регистрация";
+    }
+
+    async function safeJson(response) {
+      const text = await response.text();
+      try {
+        return text ? JSON.parse(text) : {};
+      } catch (err) {
+        console.error("Ошибка парсинга JSON:", err, text);
+        return {};
+      }
+    }
+
+    document.getElementById("regForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      clearErrors();
+      setLoading(true);
+
+      const fullname = fullnameInput.value.trim();
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      if (!fullname) {
+        showError(fullnameError, "Имя обязательно");
+        setLoading(false);
+        return;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        showError(emailError, "Неверный формат email");
+        setLoading(false);
+        return;
+      }
+
+      if (password.length < 6) {
+        showError(passwordError, "Пароль должен быть не менее 6 символов");
+        setLoading(false);
+        return;
+      }
+
+      const payload = {
+        username: email,
+        password: password,
+        full_name: fullname,
+        email: email
+      };
+
+      console.log("Отправка запроса регистрации:", payload);
+
+      try {
+        const response = await retryFetch(window.API_BASE + "/api/auth/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await safeJson(response);
+        console.log("Ответ сервера:", data);
+
+        if (!response.ok) {
+          const errorMsg = data.error || data.message || "Ошибка регистрации";
+
+          const lower = String(errorMsg).toLowerCase();
+
+          if (lower.includes("email") || lower.includes("почт") || lower.includes("существ")) {
+            showError(emailError, errorMsg);
+          } else if (lower.includes("парол")) {
+            showError(passwordError, errorMsg);
+          } else if (lower.includes("имя") || lower.includes("организац") || lower.includes("full_name")) {
+            showError(fullnameError, errorMsg);
+          } else {
+            showError(emailError, errorMsg);
+          }
+
+          setLoading(false);
+          return;
+        }
+
+        const token = data.access_token || data.token || null;
+
+        if (token) {
+          localStorage.setItem("auth_token", token);
+        }
+
+        localStorage.setItem("userName", fullname);
+        localStorage.setItem("userEmail", email);
+
+        console.info("Регистрация успешна");
+
+        window.location.href = "../main/home.html";
+      } catch (err) {
+        console.error("Ошибка соединения с сервером:", err);
+        alert("Ошибка соединения с сервером. Попробуйте позже.");
+      } finally {
+        setLoading(false);
+      }
     });
-  }
+  </script>
 
-  // ===== Appeals =====
-  async function sendInternal() {
-    const token = getJwt();
-    if (!token) return show({ error: "JWT missing. Login first." });
-
-    const cid = Number(document.getElementById("intCid").value);
-    const text = document.getElementById("intText").value;
-
-    await requestJson("POST", "/api/appeals/analyze", {
-      headers: { "Authorization": "Bearer " + token },
-      body: { cid, text }
-    });
-  }
-
-  async function sendExternal() {
-    const cid = Number(document.getElementById("extCid").value);
-    const text = document.getElementById("extText").value;
-    const key = document.getElementById("extKey").value.trim();
-
-    await requestJson("POST", "/api/ingest/appeal", {
-      headers: { "X-Channel-Key": key },
-      body: { cid, text }
-    });
-  }
-</script>
 </body>
 </html>
