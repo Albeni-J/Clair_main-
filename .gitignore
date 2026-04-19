@@ -1,5 +1,4 @@
-GEMINI_API_KEY=AIzaSyCFm0-Xd9GSVEcXAxUpkHpEwCBDU3x5oqE
-JWT_SECRET=super_secret_change_me
+JWT_SECRET=super_secret_change_ыme
 JWT_ACCESS_TTL=15m
 
 

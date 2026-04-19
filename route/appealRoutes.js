@@ -1,14 +1,21 @@
 import { Router } from "express";
+import {
+  analyzeAndCreateAppeal,
+  ingestExternalAppeal,
+  deleteAppealById,
+  deleteAllAppealsByChannel,
+  getAppealsHistory
+} from "../controller/appeals.js";
+
 import { authRequired } from "../middleware/authMiddleware.js";
 import { channelKeyRequired } from "../middleware/channelAuthMiddleware.js";
-import { analyzeAndCreateAppeal, ingestExternalAppeal } from "../controller/appeals.js";
 
 const router = Router();
 
-// (A) внутренний (админка)
-router.post("/appeals/analyze", authRequired, analyzeAndCreateAppeal);
-
-// (B) внешний (интеграции)
-router.post("/ingest/appeal", channelKeyRequired, ingestExternalAppeal);
+router.post("/", authRequired, analyzeAndCreateAppeal);
+router.post("/external", channelKeyRequired, ingestExternalAppeal);
+router.get("/history", authRequired, getAppealsHistory);
+router.delete("/channel/:channelId/all", authRequired, deleteAllAppealsByChannel);
+router.delete("/:appealId", authRequired, deleteAppealById);
 
 export default router;

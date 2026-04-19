@@ -2,73 +2,109 @@ import amqp from "amqplib";
 
 let conn;
 let channel;
+let initialized = false;
+
+function toSafeNumber(v, fallback = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function getRabbitUrl() {
+  if (process.env.RABBIT_URL) {
+    return process.env.RABBIT_URL;
+  }
+
+  const user = process.env.RABBIT_USER || "guest";
+  const pass = process.env.RABBIT_PASS || "guest";
+  const host = process.env.RABBIT_HOST || "localhost";
+  const port = process.env.RABBIT_PORT || "5672";
+
+  return `amqp://${user}:${pass}@${host}:${port}`;
+}
+
+export function resolveQueueByChannelId(channelId) {
+  const cid = toSafeNumber(channelId, 0);
+  return `appeals_channel_${cid}`;
+}
+
+export function buildPausedQueueName(channelId) {
+  const cid = toSafeNumber(channelId, 0);
+  return `appeals_channel_${cid}_paused`;
+}
 
 export async function initRabbit() {
-  if (channel) return channel;
+  if (initialized && channel) return channel;
 
-  const url = process.env.RABBIT_URL;
+  const url = getRabbitUrl();
+
   conn = await amqp.connect(url);
 
-  conn.on("error", (err) => console.error("Rabbit error:", err));
+  conn.on("error", (err) => {
+    console.error("Rabbit error:", err);
+  });
+
   conn.on("close", () => {
-    console.error("Rabbit connection closed. Exit to restart.");
-    process.exit(1);
+    console.error("Rabbit connection closed");
+    initialized = false;
+    channel = null;
   });
 
   channel = await conn.createChannel();
+  await channel.prefetch(Number(process.env.RABBIT_PREFETCH || 5));
 
-  const queue = process.env.RABBIT_QUEUE || "appeals_queue";
-  await channel.assertQueue(queue, { durable: true });
-
-  console.log("✅ RabbitMQ connected, queue:", queue);
+  initialized = true;
   return channel;
 }
 
-export async function publishToQueue(messageObj) {
+export async function ensureChannelQueues(channelId) {
   const ch = await initRabbit();
-  const queue = process.env.RABBIT_QUEUE || "appeals_queue";
 
-  const payload = Buffer.from(JSON.stringify(messageObj));
-  const ok = ch.sendToQueue(queue, payload, { persistent: true });
+  const mainQueue = resolveQueueByChannelId(channelId);
+  const pausedQueue = buildPausedQueueName(channelId);
 
-  if (!ok) console.warn("RabbitMQ backpressure: sendToQueue returned false");
+  await ch.assertQueue(mainQueue, { durable: true });
+  await ch.assertQueue(pausedQueue, { durable: true });
+
+  return { ch, mainQueue, pausedQueue };
 }
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+export async function publishToQueue(messageObj) {
+  const channelId = Number(messageObj?.data?.cid || 0);
 
-export async function consumeQueue(onMessage) {
-  const ch = await initRabbit();
-  const queue = process.env.RABBIT_QUEUE || "appeals_queue";
+  if (!channelId) {
+    throw new Error("publishToQueue requires data.cid");
+  }
 
-  // чтобы worker не брал сразу много сообщений
-  await ch.prefetch(1);
+  const { ch, mainQueue } = await ensureChannelQueues(channelId);
+  const payload = Buffer.from(JSON.stringify(messageObj));
+  const ok = ch.sendToQueue(mainQueue, payload, { persistent: true });
 
-  // ---- RATE LIMIT: 5 в минуту ----
-  const MAX_PER_MINUTE = 5;
-  const INTERVAL_MS = Math.ceil(60_000 / MAX_PER_MINUTE); // 12000
-  let lastStart = 0;
-  // --------------------------------
+  if (!ok) {
+    console.warn("RabbitMQ backpressure on queue:", mainQueue);
+  }
 
-  ch.consume(queue, async (msg) => {
-    if (!msg) return;
+  console.log("📨 Published to queue:", mainQueue, "cid:", channelId);
+  return { ok, queue: mainQueue };
+}
 
-    try {
-      // ✅ тормозим ПЕРЕД обработкой (между стартами)
-      const now = Date.now();
-      const wait = lastStart ? Math.max(0, INTERVAL_MS - (now - lastStart)) : 0;
-      if (wait > 0) await sleep(wait);
-      lastStart = Date.now();
+export async function requeueToTail(channelId, msgContent, headers = {}) {
+  const { ch, mainQueue } = await ensureChannelQueues(channelId);
 
-      const body = JSON.parse(msg.content.toString());
-      await onMessage(body);
-
-      ch.ack(msg);
-    } catch (e) {
-      console.error("❌ Worker error:", e.message);
-      // чтобы не зациклить бесконечно:
-      ch.nack(msg, false, false);
-    }
+  ch.sendToQueue(mainQueue, msgContent, {
+    persistent: true,
+    headers
   });
 
-  console.log("👂 Worker listening queue:", queue, `| rate: ${MAX_PER_MINUTE}/min`);
+  return { queue: mainQueue };
+}
+
+export async function moveToPausedQueue(channelId, msgContent, headers = {}) {
+  const { ch, pausedQueue } = await ensureChannelQueues(channelId);
+
+  ch.sendToQueue(pausedQueue, msgContent, {
+    persistent: true,
+    headers
+  });
+
+  return { queue: pausedQueue };
 }

@@ -5,144 +5,26 @@
   <meta charset="UTF-8">
   <title>CLAIR — Картография</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="../assets/css/style.css">
 
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: "Inter", sans-serif;
-    }
-
-    html,
-    body {
-      height: 100%;
-      overflow: hidden;
-    }
-
-    body {
-      background: #1E1F26;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .container {
-      width: 95%;
-      height: 95%;
-      max-width: 1400px;
-      background: #f3f3ff;
-      border-radius: 25px;
-      padding: 20px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    main {
-      flex: 1;
-      display: flex;
+    .cartography-page main {
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
       padding: 20px;
       gap: 20px;
       overflow-y: auto;
-      /* чтобы всё оставалось внутри main */
     }
 
     .page-title {
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 600;
       color: #2e44ff;
+      margin-bottom: 10px;
     }
 
-    .page-description {
-      font-size: 14px;
-      color: #333;
-      text-align: center;
-      max-width: 1000px;
-    }
-
-    /* фильтры */
-    .filters {
-      width: 100%;
-      max-width: 1000px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      justify-content: space-between;
-    }
-
-    .filter-item {
-      flex: 1 1 220px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .filter-item label {
-      font-size: 13px;
-      color: #2e44ff;
-      font-weight: 600;
-    }
-
-    .filter-item select {
-      padding: 8px;
-      border-radius: 20px;
-      border: 2px solid #cdd3ff;
-      background: #fff;
-      color: #111;
-      outline: none;
-    }
-
-    .filter-item select:focus {
-      border-color: #2e44ff;
-    }
-
-    .type-chips {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .chip {
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      color: #fff;
-      cursor: pointer;
-      user-select: none;
-      opacity: 0.5;
-    }
-
-    .chip.active {
-      opacity: 1;
-    }
-
-    .chip.red {
-      background: #ef4444;
-    }
-
-    /* Ошибки */
-    .chip.orange {
-      background: #f59e0b;
-    }
-
-    /* Критика */
-    .chip.green {
-      background: #22c55e;
-    }
-
-    /* Предложения */
-    .chip.blue {
-      background: #3b82f6;
-    }
-
-    /* Обращения */
-
-    /* карта */
+    /* Контейнер карты */
     .map-container {
       width: 100%;
       max-width: 1000px;
@@ -150,62 +32,134 @@
       border-radius: 20px;
       padding: 20px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      position: relative;
     }
 
-    .map-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .map-header h2 {
-      font-size: 16px;
-      color: #2e44ff;
-    }
-
-    .legend {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .legend .chip {
-      cursor: default;
-    }
-
+    /* Фоновая карта мира */
     .map-placeholder {
-      height: 400px;
-      background: #f3f3ff;
+      height: 500px;
+      background: #f3f3ff url('https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg') no-repeat center;
+      background-size: contain;
       border-radius: 16px;
       position: relative;
       overflow: hidden;
+      border: 1px solid #eef0ff;
     }
 
-    /* точки */
+    /* Боковые легенды */
+    .map-legend {
+      position: absolute;
+      top: 20px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      padding: 15px;
+      font-size: 12px;
+      color: #333;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      width: 150px;
+      z-index: 10;
+    }
+
+    .left-legend {
+      left: -165px;
+    }
+
+    .right-legend {
+      right: -165px;
+    }
+
+    .legend-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #2e44ff;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    /* Стили точек инцидентов */
     .dot {
       position: absolute;
-      width: 10px;
-      height: 10px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
       transform: translate(-50%, -50%);
-      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 2px solid #fff;
+      box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
     }
 
-    .dot.red {
-      background: #ef4444;
+    .dot:hover {
+      transform: translate(-50%, -50%) scale(1.6);
+      z-index: 100;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.4);
     }
 
-    .dot.orange {
-      background: #f59e0b;
+    /* Цвета для разных типов */
+    .dot.blue {
+      background: #3b82f6;
     }
 
+    /* Обращения */
     .dot.green {
       background: #22c55e;
     }
 
-    .dot.blue {
-      background: #3b82f6;
+    /* Предложения */
+    .dot.orange {
+      background: #f59e0b;
+    }
+
+    /* Критика */
+    .dot.red {
+      background: #ef4444;
+      box-shadow: 0 0 8px #ef4444;
+    }
+
+    /* Ошибки (с вечением) */
+    .dot.purple {
+      background: #8b5cf6;
+    }
+
+    /* Неопознано */
+    .dot.magenta {
+      background: #d946ef;
+    }
+
+    /* Ложь */
+    .dot.brown {
+      background: #a85707;
+    }
+
+    /* Спам */
+    .dot.gray {
+      background: #6b7280;
+    }
+
+    /* Не в тему */
+
+    /* Адаптивность для мобилок */
+    @media (max-width: 1350px) {
+      .map-legend {
+        position: static;
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+      }
+
+      .left-legend,
+      .right-legend {
+        left: 0;
+        right: 0;
+      }
     }
   </style>
 </head>
@@ -213,92 +167,131 @@
 <body class="cartography-page">
 
   <div class="container">
-
     <div id="header"></div>
-    <script>
-      fetch("../main/partials/header.html")
-        .then(r => r.text())
-        .then(html => { document.getElementById("header").innerHTML = html; });
-    </script>
+
+    <div class="nav-buttons">
+      <button class="btn-back" onclick="goBack()">Назад</button>
+      <button class="btn-home" onclick="goHome()">Главная</button>
+    </div>
 
     <main>
-      <h1 class="page-title">Картография</h1>
-      <p class="page-description">
-        Точечная визуализация отзывов и инцидентов. Цвет точки зависит от типа: красный — ошибки, оранжевый — критика,
-        зелёный — предложения, синий — обращения.
-      </p>
-
-      <section class="filters">
-        <div class="filter-item">
-          <label>Типы отзывов</label>
-          <div class="type-chips" id="typeChips">
-            <span class="chip red active" data-type="error">Ошибки</span>
-            <span class="chip orange active" data-type="critique">Критика</span>
-            <span class="chip green active" data-type="proposal">Предложения</span>
-            <span class="chip blue active" data-type="request">Обращения</span>
-          </div>
-        </div>
-      </section>
+      <h1 class="page-title">Картография инцидентов</h1>
 
       <section class="map-container">
-        <div class="map-header">
-          <h2>Мировая карта инцидентов</h2>
+        <div class="map-legend left-legend">
+          <div class="legend-title">Типы контента</div>
+          <div class="legend-item"><span class="dot blue" style="position:static; transform:none;"></span> Обращения
+          </div>
+          <div class="legend-item"><span class="dot green" style="position:static; transform:none;"></span> Предложения
+          </div>
+          <div class="legend-item"><span class="dot orange" style="position:static; transform:none;"></span> Критика
+          </div>
+          <div class="legend-item"><span class="dot red" style="position:static; transform:none;"></span> Ошибки</div>
         </div>
-        <div id="map" class="map-placeholder"></div>
+
+        <div id="map" class="map-placeholder">
+          <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;">
+            Загрузка данных...
+          </div>
+        </div>
+
+        <div class="map-legend right-legend">
+          <div class="legend-title">Аномалии</div>
+          <div class="legend-item"><span class="dot purple" style="position:static; transform:none;"></span> Неопознано
+          </div>
+          <div class="legend-item"><span class="dot magenta" style="position:static; transform:none;"></span> Ложь</div>
+          <div class="legend-item"><span class="dot brown" style="position:static; transform:none;"></span> Спам</div>
+          <div class="legend-item"><span class="dot gray" style="position:static; transform:none;"></span> Не в тему
+          </div>
+        </div>
       </section>
     </main>
 
     <div id="footer"></div>
-    <script>
-      fetch("../main/partials/footer.html")
-        .then(r => r.text())
-        .then(html => { document.getElementById("footer").innerHTML = html; });
-    </script>
-
   </div>
 
+  <script src="../scripts/common.js"></script>
   <script>
-    const TYPE_CLASS = { error: 'red', critique: 'orange', proposal: 'green', request: 'blue' };
-    const DATA = [
-      { x: 20, y: 30, type: 'error' },
-      { x: 40, y: 50, type: 'critique' },
-      { x: 60, y: 20, type: 'proposal' },
-      { x: 80, y: 70, type: 'request' }
-    ];
+    const TYPE_CLASS = {
+      bug: 'red',
+      criticism: 'orange',
+      suggestion: 'green',
+      request: 'blue',
+      unknown: 'purple',
+      fake: 'magenta',
+      spam: 'brown',
+      offtopic: 'gray'
+    };
 
-    let activeTypes = new Set(['error', 'critique', 'proposal', 'request']);
     const mapEl = document.getElementById('map');
 
-    function renderDots() {
-      mapEl.innerHTML = '';
-      DATA.forEach(d => {
-        if (activeTypes.has(d.type)) {
-          const dot = document.createElement('div');
-          dot.className = `dot ${TYPE_CLASS[d.type]}`;
-          dot.style.left = d.x + '%';
-          dot.style.top = d.y + '%';
-          mapEl.appendChild(dot);
+    async function loadMapData() {
+      // 1. Проверяем, какие каналы выбраны
+      const selectedIds = JSON.parse(localStorage.getItem("selected_channels") || "[]");
+      const token = window.getAuthToken();
+
+      if (selectedIds.length === 0) {
+        mapEl.innerHTML = `
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:#666; gap:10px;">
+            <p>Нет выбранных каналов.</p>
+          </div>`;
+        return;
+      }
+
+      try {
+        // 2. Делаем запрос к серверу
+        const response = await fetch(`${window.API_BASE}/api/reports/channels`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error("Unauthorized");
+
+        const data = await response.json();
+        const channels = data.channels.filter(ch => selectedIds.includes(String(ch.id)));
+
+        mapEl.innerHTML = ''; // Очищаем текст загрузки
+
+        // 3. Рисуем точки
+        channels.forEach(ch => {
+          (ch.appeals || []).forEach(app => {
+            const dot = document.createElement('div');
+            dot.className = `dot ${TYPE_CLASS[app.type] || 'gray'}`;
+
+            // Псевдо-координаты на основе ID, чтобы они не менялись при обновлении страницы
+            // Числа 13 и 7 подобраны для разброса по всей карте
+            const x = (app.id * 131) % 85 + 7;
+            const y = (app.id * 77) % 70 + 15;
+
+            dot.style.left = x + '%';
+            dot.style.top = y + '%';
+
+            // Всплывающая подсказка при наведении
+            dot.title = `Канал: ${ch.name}\nТип: ${app.type}\nВердикт AI: ${app.ai_comment || 'Обработано'}`;
+
+            mapEl.appendChild(dot);
+          });
+        });
+
+        if (mapEl.children.length === 0) {
+          mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#999;">В выбранных каналах пока нет данных.</div>';
         }
-      });
+
+      } catch (err) {
+        console.error(err);
+        mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:red;">Ошибка авторизации или связи с сервером.</div>';
+      }
     }
 
-    document.getElementById('typeChips').addEventListener('click', e => {
-      const chip = e.target.closest('.chip');
-      if (!chip) return;
-      const type = chip.dataset.type;
-      if (activeTypes.has(type)) {
-        activeTypes.delete(type);
-        chip.classList.remove('active');
-      } else {
-        activeTypes.add(type);
-        chip.classList.add('active');
-      }
-      renderDots();
+    document.addEventListener('DOMContentLoaded', () => {
+      loadHeader();
+      loadFooter();
+      loadMapData();
     });
 
-    renderDots();
+    // Навигация
+    function goBack() { window.history.back(); }
+    function goHome() { window.location.href = "home.html"; }
   </script>
-
 </body>
 
 </html>

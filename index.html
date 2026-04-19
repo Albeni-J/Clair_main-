@@ -3,458 +3,619 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Clair Test Frontend</title>
+  <title>Clair Frontend</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f5f7fb;
-      color: #222;
-      padding: 30px;
+      background: #f4f7fb;
+      color: #1f2937;
     }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
     .container {
-      max-width: 1100px;
+      max-width: 1300px;
       margin: 0 auto;
+      padding: 24px;
+    }
+    .header, .card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+    .muted { color: #6b7280; }
+    .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      grid-template-columns: 2fr 1fr;
       gap: 20px;
     }
-
-    .card {
-      background: white;
-      border-radius: 14px;
-      padding: 20px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
     }
-
-    .card h2 {
-      margin-top: 0;
-      font-size: 20px;
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
     }
-
+    .tab-btn {
+      border: none;
+      background: #e5e7eb;
+      padding: 10px 16px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .tab-btn.active {
+      background: #111827;
+      color: white;
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
     label {
       display: block;
-      margin-bottom: 6px;
       font-size: 14px;
-      color: #555;
+      font-weight: 600;
+      margin-bottom: 6px;
     }
-
     input, textarea {
       width: 100%;
-      padding: 10px 12px;
-      margin-bottom: 12px;
-      border: 1px solid #d9dce3;
-      border-radius: 10px;
+      padding: 12px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
       font-size: 14px;
-      outline: none;
+      margin-bottom: 14px;
+      background: #fff;
     }
-
-    input:focus, textarea:focus {
-      border-color: #4f46e5;
-    }
-
+    textarea { resize: vertical; min-height: 120px; }
     button {
-      width: 100%;
       border: none;
-      border-radius: 10px;
-      padding: 11px 14px;
-      font-size: 14px;
-      cursor: pointer;
-      background: #2563eb;
+      background: #111827;
       color: white;
-      margin-bottom: 10px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 700;
     }
-
-    button:hover {
-      background: #1d4ed8;
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
     }
-
-    .secondary {
-      background: #6b7280;
+    button.danger {
+      background: #b91c1c;
     }
-
-    .secondary:hover {
-      background: #4b5563;
-    }
-
-    .result {
-      margin-top: 10px;
-      padding: 10px;
-      border-radius: 10px;
-      background: #f3f4f6;
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .status {
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #eef2ff;
+      margin-bottom: 12px;
       white-space: pre-wrap;
       word-break: break-word;
-      font-size: 13px;
     }
-
-    .ok {
-      color: #166534;
-      background: #dcfce7;
-    }
-
-    .err {
+    .error {
+      background: #fef2f2;
       color: #991b1b;
-      background: #fee2e2;
     }
-
-    .muted {
-      color: #374151;
+    pre {
       background: #f3f4f6;
-    }
-
-    .token-box {
-      font-size: 12px;
-      white-space: pre-wrap;
-      word-break: break-all;
-      padding: 10px;
-      border-radius: 10px;
-      background: #eef2ff;
-      margin-top: 10px;
-    }
-
-    .channel {
-      margin-top: 12px;
-      padding: 12px;
-      border: 1px solid #e5e7eb;
+      padding: 14px;
       border-radius: 12px;
-      background: #fafafa;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 12px;
     }
-
-    .channel-title {
-      font-weight: bold;
+    .login-item {
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 14px;
       margin-bottom: 10px;
     }
-
-    .appeal {
-      margin-top: 8px;
-      padding: 10px;
-      border-left: 4px solid #2563eb;
-      background: white;
-      border-radius: 8px;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-
-    .small {
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #e5e7eb;
       font-size: 12px;
-      color: #666;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+    .top-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .summary-box {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 12px;
+    }
+    @media (max-width: 980px) {
+      .grid, .grid-2 { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <h1>Clair Backend Test</h1>
-
   <div class="container">
-    <div class="card">
-      <h2>Регистрация</h2>
+    <div class="header">
+      <div class="top-actions">
+        <div>
+          <h1>Clair Frontend</h1>
+          <div class="muted">Обычный HTML/JS интерфейс для регистрации, логина, appeal, external appeal, удаления, отчётов и географии запросов.</div>
+        </div>
+        <div class="row">
+          <button class="secondary" onclick="loadProfileAndHistory()">Обновить профиль</button>
+          <button onclick="logout()">Выйти</button>
+        </div>
+      </div>
+    </div>
 
-      <label for="reg_username">Username</label>
-      <input id="reg_username" placeholder="username" />
+    <div class="grid">
+      <div class="card">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="auth">Auth</button>
+          <button class="tab-btn" data-tab="internal">Internal Appeal</button>
+          <button class="tab-btn" data-tab="external">External Appeal</button>
+          <button class="tab-btn" data-tab="delete">Delete</button>
+          <button class="tab-btn" data-tab="reports">Отчёт</button>
+          <button class="tab-btn" data-tab="geo">География</button>
+        </div>
 
-      <label for="reg_password">Password</label>
-      <input id="reg_password" type="password" placeholder="password" />
+        <div id="tab-auth" class="tab-content active">
+          <div class="grid-2">
+            <div class="card" style="box-shadow:none;border:1px solid #e5e7eb; margin:0;">
+              <h3>Регистрация</h3>
+              <label>Username</label>
+              <input id="reg-username" type="text" />
 
-      <label for="reg_email">Email</label>
-      <input id="reg_email" placeholder="email" />
+              <label>Password</label>
+              <input id="reg-password" type="password" />
 
-      <button onclick="registerUser()">Register</button>
+              <label>Full name</label>
+              <input id="reg-fullname" type="text" />
 
-      <div id="registerResult" class="result muted">Ожидание...</div>
+              <label>Email</label>
+              <input id="reg-email" type="email" />
+
+              <button onclick="registerUser()">Зарегистрироваться</button>
+            </div>
+
+            <div class="card" style="box-shadow:none;border:1px solid #e5e7eb; margin:0;">
+              <h3>Логин</h3>
+              <label>Username</label>
+              <input id="login-username" type="text" />
+
+              <label>Password</label>
+              <input id="login-password" type="password" />
+
+              <button onclick="loginUser()">Войти</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-internal" class="tab-content">
+          <h3>Internal appeal через JWT</h3>
+          <label>Channel ID (cid)</label>
+          <input id="internal-cid" type="number" />
+
+          <label>Текст appeal</label>
+          <textarea id="internal-text"></textarea>
+
+          <button onclick="createInternalAppeal()">Отправить internal appeal</button>
+        </div>
+
+        <div id="tab-external" class="tab-content">
+          <h3>External appeal без JWT</h3>
+
+          <label>Channel Key</label>
+          <input id="external-channel-key" type="text" placeholder="x-channel-key" />
+
+          <label>Channel ID (cid)</label>
+          <input id="external-cid" type="number" placeholder="например 1" />
+
+          <label>Текст обращения</label>
+          <textarea id="external-text"></textarea>
+
+          <button onclick="createExternalAppeal()">Отправить external appeal</button>
+        </div>
+
+        <div id="tab-delete" class="tab-content">
+          <div class="grid-2">
+            <div class="card" style="box-shadow:none;border:1px solid #e5e7eb; margin:0;">
+              <h3>Удалить один appeal</h3>
+              <label>Appeal ID</label>
+              <input id="delete-appeal-id" type="number" />
+              <button class="danger" onclick="deleteAppeal()">Удалить appeal</button>
+            </div>
+
+            <div class="card" style="box-shadow:none;border:1px solid #e5e7eb; margin:0;">
+              <h3>Удалить все appeal канала</h3>
+              <label>Channel ID</label>
+              <input id="delete-channel-id" type="number" />
+              <button class="danger" onclick="deleteChannelAppeals()">Удалить все appeal</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="tab-reports" class="tab-content">
+          <h3>Блок под отчёты</h3>
+          <p class="muted">Когда на backend будет endpoint типа <b>GET /reports</b> или <b>GET /channels/:id/appeals</b>, сюда можно подключить таблицу appeal, AI-анализ и IP metadata.</p>
+          <label>Пример запроса отчёта</label>
+          <input id="report-path" type="text" value="/channels/reports" />
+          <button onclick="requestReport()">Отправить запрос на отчёт</button>
+        </div>
+
+        <div id="tab-geo" class="tab-content">
+          <h3>История запросов и география</h3>
+
+          <label>Channel ID (необязательно)</label>
+          <input id="geo-channel-id" type="number" placeholder="если хочешь фильтр по каналу" />
+
+          <div class="row" style="margin-bottom: 14px;">
+            <button onclick="loadGeoHistory()">Загрузить историю</button>
+          </div>
+
+          <div id="geo-summary" class="status">Данных пока нет</div>
+          <div id="geo-history-box"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h3>Состояние</h3>
+          <div id="status" class="status">Готово</div>
+          <div><b>JWT:</b></div>
+          <pre id="token-box">Нет токена</pre>
+        </div>
+
+        <div class="card">
+          <h3>Профиль / me</h3>
+          <pre id="profile-box">null</pre>
+        </div>
+
+        <div class="card">
+          <h3>Последний ответ API</h3>
+          <pre id="response-box">null</pre>
+        </div>
+      </div>
     </div>
 
     <div class="card">
-      <h2>Логин</h2>
-
-      <label for="login_username">Username</label>
-      <input id="login_username" placeholder="username" />
-
-      <label for="login_password">Password</label>
-      <input id="login_password" type="password" placeholder="password" />
-
-      <button onclick="loginUser()">Login</button>
-      <button class="secondary" onclick="getMe()">Check /me</button>
-      <button class="secondary" onclick="clearToken()">Clear Token</button>
-
-      <div id="loginResult" class="result muted">Ожидание...</div>
-      <div id="meResult" class="result muted">Ожидание...</div>
-      <div id="tokenBox" class="token-box">JWT: not stored</div>
-    </div>
-
-    <div class="card">
-      <h2>Отчёты</h2>
-      <div class="small">Путь: GET /api/channels/reports</div>
-
-      <button onclick="getReports()">Load Reports</button>
-
-      <div id="reportsResult" class="result muted">Ожидание...</div>
-      <div id="reports"></div>
+      <h3>История логинов</h3>
+      <div id="login-history-box">Логов пока нет</div>
     </div>
   </div>
 
   <script>
-    const AUTH_API = "http://localhost:3000/api/auth";
-    const API = "http://localhost:3000/api";
+    const API_BASE = "http://localhost:3000/api";
+    let token = localStorage.getItem("clair_token") || "";
 
-    renderToken();
-
-    function setResult(id, text, type = "muted") {
-      const el = document.getElementById(id);
-      el.className = "result " + type;
-      el.textContent = text;
+    function setStatus(message, isError = false) {
+      const box = document.getElementById("status");
+      box.textContent = message;
+      box.className = isError ? "status error" : "status";
     }
 
-    function renderToken() {
-      const token = localStorage.getItem("token");
-      document.getElementById("tokenBox").textContent = token
-        ? "JWT:\n" + token
-        : "JWT: not stored";
+    function setResponse(data) {
+      document.getElementById("response-box").textContent = JSON.stringify(data, null, 2);
     }
 
-    function clearToken() {
-      localStorage.removeItem("token");
-      renderToken();
-      setResult("loginResult", "Token removed", "ok");
-      setResult("meResult", "Ожидание...", "muted");
-      setResult("reportsResult", "Ожидание...", "muted");
-      document.getElementById("reports").innerHTML = "";
+    function refreshTokenBox() {
+      document.getElementById("token-box").textContent = token || "Нет токена";
     }
 
-    async function safeParseResponse(res) {
-      const text = await res.text();
-      try {
-        return { ok: res.ok, status: res.status, data: JSON.parse(text) };
-      } catch {
-        return { ok: res.ok, status: res.status, data: text };
+    async function api(path, options = {}, withAuth = false) {
+      const headers = Object.assign({ "Content-Type": "application/json" }, options.headers || {});
+      if (withAuth && token) {
+        headers["Authorization"] = `Bearer ${token}`;
       }
+
+      const response = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers
+      });
+
+      const text = await response.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        data = { raw: text };
+      }
+
+      if (!response.ok) {
+        throw new Error(data?.error || data?.message || `HTTP ${response.status}`);
+      }
+
+      return data;
     }
 
     async function registerUser() {
-      const username = document.getElementById("reg_username").value.trim();
-      const password = document.getElementById("reg_password").value.trim();
-      const email = document.getElementById("reg_email").value.trim();
-
-      setResult("registerResult", "Loading...", "muted");
-
       try {
-        const res = await fetch(AUTH_API + "/register", {
+        setStatus("Регистрация...");
+        const payload = {
+          username: document.getElementById("reg-username").value.trim(),
+          password: document.getElementById("reg-password").value,
+          full_name: document.getElementById("reg-fullname").value.trim(),
+          email: document.getElementById("reg-email").value.trim(),
+          tg_push: false
+        };
+
+        const data = await api("/auth/register", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            username,
-            password,
-            email
-          })
+          body: JSON.stringify(payload)
         });
 
-        const result = await safeParseResponse(res);
-
-        if (!result.ok) {
-          setResult(
-            "registerResult",
-            "Register error (" + result.status + "):\n" + JSON.stringify(result.data, null, 2),
-            "err"
-          );
-          return;
-        }
-
-        setResult(
-          "registerResult",
-          "Register success:\n" + JSON.stringify(result.data, null, 2),
-          "ok"
-        );
+        setResponse(data);
+        setStatus("Пользователь зарегистрирован");
       } catch (e) {
-        setResult("registerResult", "Register exception: " + e.message, "err");
+        setStatus(e.message, true);
       }
     }
 
     async function loginUser() {
-      const username = document.getElementById("login_username").value.trim();
-      const password = document.getElementById("login_password").value.trim();
+      try {
+        setStatus("Вход...");
+        const payload = {
+          username: document.getElementById("login-username").value.trim(),
+          password: document.getElementById("login-password").value
+        };
 
-      setResult("loginResult", "Loading...", "muted");
+        const data = await api("/auth/login", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+
+        token = data.access_token || "";
+        localStorage.setItem("clair_token", token);
+        refreshTokenBox();
+        setResponse(data);
+        setStatus("Успешный вход");
+        await loadProfileAndHistory();
+      } catch (e) {
+        setStatus(e.message, true);
+      }
+    }
+
+    async function loadProfileAndHistory() {
+      if (!token) {
+        setStatus("Сначала войди", true);
+        return;
+      }
 
       try {
-        const res = await fetch(AUTH_API + "/login", {
+        const me = await api("/auth/me", { method: "GET" }, true);
+        document.getElementById("profile-box").textContent = JSON.stringify(me, null, 2);
+
+        const history = await api("/auth/login-history?limit=20", { method: "GET" }, true);
+        renderLoginHistory(history.items || []);
+      } catch (e) {
+        setStatus(e.message, true);
+      }
+    }
+
+    function renderLoginHistory(items) {
+      const box = document.getElementById("login-history-box");
+      if (!items.length) {
+        box.innerHTML = "Логов пока нет";
+        return;
+      }
+
+      box.innerHTML = items.map(item => `
+        <div class="login-item">
+          <div>
+            <span class="badge">#${item.id}</span>
+            <span class="badge">${item.browser || "unknown browser"}</span>
+            <span class="badge">${item.os || "unknown os"}</span>
+            <span class="badge">${item.device_type || "unknown device"}</span>
+          </div>
+          <div><b>IP:</b> ${item.ip_address || "-"}</div>
+          <div><b>Время:</b> ${item.login_at || "-"}</div>
+          <div><b>Успех:</b> ${String(item.is_success)}</div>
+          <div><b>UA:</b> ${item.user_agent || "-"}</div>
+        </div>
+      `).join("");
+    }
+
+    async function createInternalAppeal() {
+      try {
+        setStatus("Отправка internal appeal...");
+        const payload = {
+          cid: Number(document.getElementById("internal-cid").value),
+          text: document.getElementById("internal-text").value
+        };
+
+        const data = await api("/appeals", {
+          method: "POST",
+          body: JSON.stringify(payload)
+        }, true);
+
+        setResponse(data);
+        setStatus("Internal appeal отправлен в очередь");
+      } catch (e) {
+        setStatus(e.message, true);
+      }
+    }
+
+    async function createExternalAppeal() {
+      try {
+        setStatus("Отправка external appeal...");
+        const channelKey = document.getElementById("external-channel-key").value.trim();
+        const cid = Number(document.getElementById("external-cid").value);
+        const text = document.getElementById("external-text").value;
+
+        const data = await api("/appeals/external", {
           method: "POST",
           headers: {
-            "Content-Type": "application/json"
+            "x-channel-key": channelKey
           },
-          body: JSON.stringify({
-            username,
-            password
-          })
+          body: JSON.stringify({ cid, text })
         });
 
-        const result = await safeParseResponse(res);
-
-        if (!result.ok) {
-          setResult(
-            "loginResult",
-            "Login error (" + result.status + "):\n" + JSON.stringify(result.data, null, 2),
-            "err"
-          );
-          return;
-        }
-
-        if (!result.data || !result.data.access_token) {
-          setResult(
-            "loginResult",
-            "Login success, but access_token not found:\n" + JSON.stringify(result.data, null, 2),
-            "err"
-          );
-          return;
-        }
-
-        localStorage.setItem("token", result.data.access_token);
-        renderToken();
-
-        setResult(
-          "loginResult",
-          "Login success:\n" + JSON.stringify(result.data, null, 2),
-          "ok"
-        );
+        setResponse(data);
+        setStatus("External appeal отправлен");
       } catch (e) {
-        setResult("loginResult", "Login exception: " + e.message, "err");
+        setStatus(e.message, true);
       }
     }
 
-    async function getMe() {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        setResult("meResult", "Нет токена. Сначала залогинься.", "err");
-        return;
-      }
-
-      setResult("meResult", "Loading...", "muted");
-
+    async function deleteAppeal() {
       try {
-        const res = await fetch(AUTH_API + "/me", {
-          method: "GET",
-          headers: {
-            "Authorization": "Bearer " + token
-          }
-        });
-
-        const result = await safeParseResponse(res);
-
-        if (!result.ok) {
-          setResult(
-            "meResult",
-            "ME error (" + result.status + "):\n" + JSON.stringify(result.data, null, 2),
-            "err"
-          );
-          return;
-        }
-
-        setResult(
-          "meResult",
-          "ME success:\n" + JSON.stringify(result.data, null, 2),
-          "ok"
-        );
+        setStatus("Удаление appeal...");
+        const appealId = Number(document.getElementById("delete-appeal-id").value);
+        const data = await api(`/appeals/${appealId}`, { method: "DELETE" }, true);
+        setResponse(data);
+        setStatus("Appeal удалён");
       } catch (e) {
-        setResult("meResult", "ME exception: " + e.message, "err");
+        setStatus(e.message, true);
       }
     }
 
-    async function getReports() {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        setResult("reportsResult", "Нет токена. Сначала залогинься.", "err");
-        return;
-      }
-
-      setResult("reportsResult", "Loading...", "muted");
-      document.getElementById("reports").innerHTML = "";
-
+    async function deleteChannelAppeals() {
       try {
-        const res = await fetch(API + "/channels/reports", {
-          method: "GET",
-          headers: {
-            "Authorization": "Bearer " + token
-          }
-        });
-
-        const result = await safeParseResponse(res);
-
-        if (!result.ok) {
-          setResult(
-            "reportsResult",
-            "Reports error (" + result.status + "):\n" + JSON.stringify(result.data, null, 2),
-            "err"
-          );
-          return;
-        }
-
-        const channels = Array.isArray(result.data.channels) ? result.data.channels : [];
-        renderReports(channels);
-        setResult("reportsResult", "Loaded channels: " + channels.length, "ok");
+        setStatus("Удаление appeal канала...");
+        const channelId = Number(document.getElementById("delete-channel-id").value);
+        const data = await api(`/appeals/channel/${channelId}/all`, { method: "DELETE" }, true);
+        setResponse(data);
+        setStatus("Все appeal канала удалены");
       } catch (e) {
-        setResult("reportsResult", "Reports exception: " + e.message, "err");
+        setStatus(e.message, true);
       }
     }
 
-    function renderReports(channels) {
-      const container = document.getElementById("reports");
-      container.innerHTML = "";
+    async function requestReport() {
+      try {
+        setStatus("Запрос отчёта...");
+        const path = document.getElementById("report-path").value.trim();
+        const data = await api(path, { method: "GET" }, true);
+        setResponse(data);
+        setStatus("Отчёт получен");
+      } catch (e) {
+        setStatus(e.message, true);
+      }
+    }
 
-      if (!channels.length) {
-        container.innerHTML = "<div class='result muted'>Нет каналов или отзывов</div>";
+    async function loadGeoHistory() {
+      try {
+        setStatus("Загрузка истории запросов...");
+
+        const channelIdRaw = document.getElementById("geo-channel-id").value.trim();
+        const path = channelIdRaw
+          ? `/appeals/history?channel_id=${Number(channelIdRaw)}`
+          : `/appeals/history`;
+
+        const data = await api(path, { method: "GET" }, true);
+
+        setResponse(data);
+        renderGeoHistory(data.items || []);
+        setStatus("История запросов загружена");
+      } catch (e) {
+        setStatus(e.message, true);
+      }
+    }
+
+    function renderGeoHistory(items) {
+      const box = document.getElementById("geo-history-box");
+      const summary = document.getElementById("geo-summary");
+
+      if (!items.length) {
+        summary.textContent = "История пустая";
+        box.innerHTML = "";
         return;
       }
 
-      channels.forEach(channel => {
-        const channelDiv = document.createElement("div");
-        channelDiv.className = "channel";
+      const countries = {};
+      const cities = {};
 
-        const title = document.createElement("div");
-        title.className = "channel-title";
-        title.innerHTML =
-          "Канал: " + (channel.name || "-") +
-          "<br>ID: " + (channel.id ?? "-") +
-          "<br>Key: " + (channel.channel_key || "-");
+      for (const item of items) {
+        const country = item.country || "Unknown";
+        const city = item.city || "Unknown";
 
-        channelDiv.appendChild(title);
+        countries[country] = (countries[country] || 0) + 1;
+        cities[city] = (cities[city] || 0) + 1;
+      }
 
-        const appeals = Array.isArray(channel.appeals) ? channel.appeals : [];
+      const topCountries = Object.entries(countries)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([name, count]) => `${name}: ${count}`)
+        .join(", ");
 
-        if (!appeals.length) {
-          const empty = document.createElement("div");
-          empty.className = "appeal";
-          empty.textContent = "Нет отзывов";
-          channelDiv.appendChild(empty);
-        } else {
-          appeals.forEach(a => {
-            const appealDiv = document.createElement("div");
-            appealDiv.className = "appeal";
-            appealDiv.innerHTML =
-              "<b>Appeal ID:</b> " + (a.id ?? "-") + "<br>" +
-              "<b>Rating:</b> " + (a.rating ?? "-") + "<br>" +
-              "<b>Emotion:</b> " + (a.emotion ?? "-") + "<br>" +
-              "<b>Type:</b> " + (a.type ?? "-") + "<br>" +
-              "<b>Status:</b> " + (a.status ?? "-") + "<br>" +
-              "<b>Anomaly Type:</b> " + (a.anomaly_type ?? "-") + "<br>" +
-              "<b>AI Comment:</b> " + (a.ai_comment ?? "-") + "<br>" +
-              "<b>Org Comment:</b> " + (a.org_comment ?? "-");
-            channelDiv.appendChild(appealDiv);
-          });
-        }
+      const topCities = Object.entries(cities)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([name, count]) => `${name}: ${count}`)
+        .join(", ");
 
-        container.appendChild(channelDiv);
+      summary.innerHTML = `
+        <div class="summary-grid">
+          <div class="summary-box"><b>Всего запросов:</b><br>${items.length}</div>
+          <div class="summary-box"><b>Топ страны:</b><br>${topCountries || "-"}</div>
+          <div class="summary-box"><b>Топ города:</b><br>${topCities || "-"}</div>
+        </div>
+      `;
+
+      box.innerHTML = items.map(item => `
+        <div class="login-item">
+          <div>
+            <span class="badge">appeal #${item.appeal_id}</span>
+            <span class="badge">channel #${item.channel_id}</span>
+            <span class="badge">${item.country || "unknown country"}</span>
+            <span class="badge">${item.city || "unknown city"}</span>
+          </div>
+
+          <div><b>IP:</b> ${item.ip_address || "-"}</div>
+          <div><b>Region:</b> ${item.region || "-"}</div>
+          <div><b>Provider:</b> ${item.provider || "-"}</div>
+          <div><b>Org:</b> ${item.org || "-"}</div>
+          <div><b>Created:</b> ${item.created_at || "-"}</div>
+          <div><b>Status:</b> ${item.status || "-"}</div>
+          <div><b>Type:</b> ${item.type || "-"}</div>
+          <div><b>Text:</b> ${item.text || "-"}</div>
+        </div>
+      `).join("");
+    }
+
+    function logout() {
+      token = "";
+      localStorage.removeItem("clair_token");
+      refreshTokenBox();
+      document.getElementById("profile-box").textContent = "null";
+      document.getElementById("login-history-box").innerHTML = "Логов пока нет";
+      document.getElementById("geo-history-box").innerHTML = "";
+      document.getElementById("geo-summary").textContent = "Данных пока нет";
+      setStatus("Вы вышли из аккаунта");
+    }
+
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach(x => x.classList.remove("active"));
+        document.querySelectorAll(".tab-content").forEach(x => x.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.add("active");
       });
+    });
+
+    refreshTokenBox();
+    if (token) {
+      loadProfileAndHistory();
     }
   </script>
 </body>

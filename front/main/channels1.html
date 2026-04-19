@@ -20,17 +20,10 @@
 
     /* hide scrollbar but keep scroll functionality */
     .channels-page main {
-      -ms-overflow-style: none;
-      /* IE and Edge */
-      scrollbar-width: none;
-      /* Firefox */
+      -ms-overflow-style: none; /* IE and Edge */
+      scrollbar-width: none; /* Firefox */
     }
-
-    .channels-page main::-webkit-scrollbar {
-      display: none;
-    }
-
-    /* Chrome/Safari */
+    .channels-page main::-webkit-scrollbar { display: none; } /* Chrome/Safari */
 
     .page-title {
       font-size: 24px;
@@ -144,7 +137,6 @@
       background: #fff;
       color: inherit;
     }
-
     .channel-card.selected::before,
     .channel-card.selected::after {
       content: '';
@@ -155,18 +147,8 @@
       border-radius: 0 0 6px 0;
       z-index: 5;
     }
-
-    .channel-card.selected::before {
-      top: 0;
-      left: 0;
-      border-radius: 0 0 0 6px;
-    }
-
-    .channel-card.selected::after {
-      top: 0;
-      right: 0;
-      border-radius: 0 0 6px 0;
-    }
+    .channel-card.selected::before { top: 0; left: 0; border-radius: 0 0 0 6px; }
+    .channel-card.selected::after { top: 0; right: 0; border-radius: 0 0 6px 0; }
 
     .channel-card:hover {
       transform: translateY(-5px);
@@ -370,6 +352,7 @@
       </div>
     </div>
 
+    <!-- Rename modal -->
     <div id="renameModal" class="modal-overlay">
       <div class="modal-window" style="width:420px;">
         <h3>Переименовать канал</h3>
@@ -381,6 +364,7 @@
       </div>
     </div>
 
+    <!-- Color picker modal -->
     <div id="colorModal" class="modal-overlay">
       <div class="modal-window" style="width:420px;">
         <h3>Выберите цвет</h3>
@@ -393,6 +377,7 @@
     </div>
   </div>
 
+  <!-- Delete confirmation modal -->
   <div id="deleteConfirmModal" class="modal-overlay">
     <div class="modal-window" style="width:360px;">
       <h3>Удалить канал?</h3>
@@ -407,51 +392,37 @@
   <script src="../scripts/config.js"></script>
   <script src="../scripts/common.js"></script>
   <script>
-    // БЕЗОПАСНЫЕ ПОЛИФИЛЛЫ: Предотвращают падение скрипта, если функции из common.js недоступны
-    if (typeof window.getAuthToken !== 'function') {
-      window.getAuthToken = () => localStorage.getItem('token') || '';
-    }
-    if (typeof window.serverPing !== 'function') {
-      window.serverPing = async () => true;
-    }
-    if (typeof window.API_BASE === 'undefined') {
-      window.API_BASE = '';
-    }
-
     let channelData = [];
     // Загружаем сохраненные ID из localStorage
     let selectedIds = new Set(JSON.parse(localStorage.getItem("selected_channels") || "[]"));
 
     async function loadChannels() {
       const grid = document.getElementById('channelsGrid');
-
-      try {
-        const token = window.getAuthToken();
-        // безопасно вызываем serverPing
-        let serverUp = true;
-        try {
-          serverUp = await window.serverPing();
-        } catch (e) {
-          serverUp = false;
-        }
-
-        // если сервер недоступен — показываем локальные каналы (если есть)
-        if (!serverUp) {
-          const local = JSON.parse(localStorage.getItem('local_channels') || '[]');
-          if (!local || local.length === 0) {
-            grid.innerHTML = '<p style="color:#999; grid-column: 1/-1; text-align:center;">Сервер недоступен — нет локальных каналов.</p>';
-            return;
-          }
-          channelData = local;
-          renderGrid(); // Заменено на вызов рендера для сохранения стилей и меню
-          updateDetails();
+      const token = window.getAuthToken();
+      // если сервер недоступен — показываем локальные каналы (если есть)
+      const serverUp = await window.serverPing();
+      if (!serverUp) {
+        const local = JSON.parse(localStorage.getItem('local_channels') || '[]');
+        if (!local || local.length === 0) {
+          grid.innerHTML = '<p style="color:#999; grid-column: 1/-1; text-align:center;">Сервер недоступен — нет локальных каналов.</p>';
           return;
         }
+        channelData = local;
+        grid.innerHTML = local.map(ch => `
+          <div class="channel-card ${selectedIds.has(String(ch.id)) ? 'selected' : ''}" id="card-${ch.id}" onclick="toggleChannel('${ch.id}')">
+            <div class="channel-icon">📱</div>
+            <div class="channel-title">${ch.name}</div>
+            <div style="font-size: 11px; color: #aaa;">ID: ${ch.id}</div>
+          </div>
+        `).join('');
+        updateDetails();
+        return;
+      }
 
+      try {
         const response = await fetch(`${window.API_BASE}/api/reports/channels`, {
-          headers: { "Authorization": `Bearer ${token}` }
+          headers: { "Authorization": `Bearer ${window.getAuthToken()}` }
         });
-
         if (!response.ok) {
           // debug: log response body
           const txt = await response.text().catch(() => null);
@@ -463,25 +434,20 @@
           }
           throw new Error('Ошибка сервера: ' + response.status);
         }
-
         const data = await response.json();
-
-        // ЗАЩИТА: Если data - это массив, берем его. Иначе берем data.channels
-        channelData = Array.isArray(data) ? data : (data?.channels || []);
+        channelData = data.channels;
 
         renderGrid();
         updateDetails();
       } catch (err) {
-        console.error("Ошибка в loadChannels:", err);
-        if (grid) {
-          grid.innerHTML = '<p style="color:red; grid-column: 1/-1; text-align:center;">Ошибка загрузки списка. Проверьте консоль.</p>';
-        }
+        console.error(err);
+        grid.innerHTML = '<p style="color:red; grid-column: 1/-1; text-align:center;">Ошибка загрузки. Убедитесь, что вы авторизованы.</p>';
       }
     }
 
     function renderGrid() {
       const grid = document.getElementById('channelsGrid');
-      if (!channelData || channelData.length === 0) {
+      if (channelData.length === 0) {
         grid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">У вас пока нет доступных каналов.</p>';
         return;
       }
@@ -493,12 +459,12 @@
             <div class="channel-card ${isSelected ? 'selected' : ''}" id="card-${ch.id}" onclick="toggleChannel('${ch.id}')" style="border-color:${ch.color || 'transparent'}">
               <button class="channel-menu-btn" onclick="openChannelMenu(event, '${ch.id}')">⋯</button>
               <div class="channel-menu" id="menu-${ch.id}">
-                <button onclick="startRenameChannel(event, '${ch.id}')">Изменить имя</button>
-                <button onclick="openColorPicker(event, '${ch.id}')">Выбрать цвет</button>
-                <button onclick="deleteChannel(event, '${ch.id}')">Удалить</button>
+                <button onclick="startRenameChannel('${ch.id}')">Изменить имя</button>
+                <button onclick="openColorPicker('${ch.id}')">Выбрать цвет</button>
+                <button onclick="deleteChannel('${ch.id}')">Удалить</button>
               </div>
-            <div class="channel-icon">📱</div>
-              <div class="channel-title">${ch.name}</div>
+            <div class="channel-icon" onclick="toggleChannel('${ch.id}')">📱</div>
+              <div class="channel-title" onclick="toggleChannel('${ch.id}')">${ch.name}</div>
               <div style="font-size: 11px; color: #aaa;">ID: ${ch.id}</div>
             </div>
           `;
@@ -536,8 +502,7 @@
           document.removeEventListener('click', onDoc);
         }
       };
-      // Используем setTimeout, чтобы текущий клик не вызвал мгновенное закрытие
-      setTimeout(() => document.addEventListener('click', onDoc), 0);
+      document.addEventListener('click', onDoc);
     }
 
     let manageChannelId = null;
@@ -545,8 +510,7 @@
       document.querySelectorAll('.channel-menu').forEach(m => m.classList.remove('active'));
     }
 
-    function startRenameChannel(e, id) {
-      e.stopPropagation();
+    function startRenameChannel(id) {
       closeAllMenus();
       manageChannelId = id;
       const ch = channelData.find(c => String(c.id) === String(id)) || {};
@@ -554,8 +518,7 @@
       document.getElementById('renameModal').classList.add('active');
     }
 
-    function openColorPicker(e, id) {
-      e.stopPropagation();
+    function openColorPicker(id) {
       closeAllMenus();
       manageChannelId = id;
       // render palette into modal and open
@@ -563,8 +526,7 @@
       document.getElementById('colorModal').classList.add('active');
     }
 
-    function deleteChannel(e, id) {
-      e.stopPropagation();
+    function deleteChannel(id) {
       closeAllMenus();
       manageChannelId = id;
       // open styled confirmation modal
@@ -572,11 +534,19 @@
       if (modal) modal.classList.add('active');
     }
 
+    // legacy cancel handler removed (we use cancelRenameBtn / cancelColorBtn)
+
     // palette colors (variations similar to provided image)
     const paletteColors = [
       '#0ea5a4', '#06b6d4', '#3b82f6', '#6366f1', '#7c3aed', '#ec4899', '#ef4444', '#f97316', '#f59e0b', '#84cc16',
       '#10b981', '#06b6d4', '#3b82f6', '#60a5fa', '#818cf8', '#a78bfa', '#fb7185', '#f43f5e', '#ef4444', '#f97316'
     ];
+
+    function renderPalette() {
+      // legacy palette render for any existing container
+      const container = document.getElementById('colorPalette');
+      if (container) container.innerHTML = paletteColors.map(c => `<div class="color-swatch" style="background:${c}" data-color="${c}" onclick="pickColor('${c}')"></div>`).join('');
+    }
 
     function renderPaletteModal() {
       const container = document.getElementById('colorPaletteModal');
@@ -592,6 +562,15 @@
       if (card) card.style.borderColor = color;
     }
 
+    function pickColor(color) {
+      // legacy click handler: directly apply
+      if (!manageChannelId) return;
+      const card = document.getElementById(`card-${manageChannelId}`);
+      if (card) card.style.borderColor = color;
+      const ch = channelData.find(c => String(c.id) === String(manageChannelId));
+      if (ch) { ch.color = color; saveChannelsToLocal(); }
+    }
+
     document.getElementById('saveRenameBtn').addEventListener('click', async () => {
       const name = document.getElementById('renameChannelName').value.trim();
       if (!manageChannelId) return;
@@ -601,9 +580,7 @@
         // attempt server update if available
         try {
           const token = window.getAuthToken();
-          let serverUp = false;
-          try { serverUp = await window.serverPing(); } catch (e) { }
-
+          const serverUp = await window.serverPing();
           if (serverUp && token) {
             await fetch(`${window.API_BASE}/api/channels/${manageChannelId}`, {
               method: 'PATCH',
@@ -635,9 +612,7 @@
         // attempt server update
         try {
           const token = window.getAuthToken();
-          let serverUp = false;
-          try { serverUp = await window.serverPing(); } catch (e) { }
-
+          const serverUp = await window.serverPing();
           if (serverUp && token) {
             await fetch(`${window.API_BASE}/api/channels/${manageChannelId}`, {
               method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ color })
@@ -661,12 +636,20 @@
       selectedColorPreview = null;
     });
 
+    document.getElementById('deleteChannelBtn').addEventListener('click', async () => {
+      // open delete confirm modal from manage modal
+      if (!manageChannelId) return;
+      const modal = document.getElementById('deleteConfirmModal');
+      if (modal) modal.classList.add('active');
+    });
+
     function saveChannelsToLocal() {
       try { localStorage.setItem('local_channels', JSON.stringify(channelData)); } catch (e) { console.warn(e); }
     }
 
     // init palette on load
     document.addEventListener('DOMContentLoaded', () => {
+      renderPalette();
       renderPaletteModal();
     });
 
@@ -674,23 +657,18 @@
     document.addEventListener('DOMContentLoaded', () => {
       const cancel = document.getElementById('cancelDeleteBtn');
       const confirm = document.getElementById('confirmDeleteBtn');
-
       if (cancel) cancel.addEventListener('click', () => {
         const modal = document.getElementById('deleteConfirmModal'); if (modal) modal.classList.remove('active');
         manageChannelId = null;
       });
-
       if (confirm) confirm.addEventListener('click', async () => {
         try {
           const token = window.getAuthToken();
-          let serverUp = false;
-          try { serverUp = await window.serverPing(); } catch (e) { }
-
+          const serverUp = await window.serverPing();
           if (serverUp && token) {
             await fetch(`${window.API_BASE}/api/channels/${manageChannelId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
           }
         } catch (err) { console.warn('server delete failed', err); }
-
         channelData = channelData.filter(c => String(c.id) !== String(manageChannelId));
         saveChannelsToLocal();
         const modal = document.getElementById('deleteConfirmModal'); if (modal) modal.classList.remove('active');
@@ -757,9 +735,7 @@
       }
 
       try {
-        let serverUp = false;
-        try { serverUp = await window.serverPing(); } catch (e) { }
-
+        const serverUp = await window.serverPing();
         if (!serverUp) {
           // сохраняем локально
           const local = JSON.parse(localStorage.getItem('local_channels') || '[]');
@@ -803,10 +779,9 @@
       }
     }
 
-    // БЕЗОПАСНАЯ ИНИЦИАЛИЗАЦИЯ: Оборачиваем внешние функции в try/catch
     document.addEventListener('DOMContentLoaded', () => {
-      try { if (typeof loadHeader === 'function') loadHeader(); } catch (e) { console.warn("Не удалось загрузить header", e); }
-      try { if (typeof loadFooter === 'function') loadFooter(); } catch (e) { console.warn("Не удалось загрузить footer", e); }
+      loadHeader();
+      loadFooter();
       loadChannels();
     });
 

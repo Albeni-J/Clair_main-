@@ -1,10 +1,17 @@
 import { Router } from "express";
 import { authRequired } from "../middleware/authMiddleware.js";
-import { getUserChannelsReports } from "../controller/report.js";
+import {
+  getUserChannelsReports,
+  getAppealsStats,
+  getAppealsAiSummary,
+  resumeChannelProcessing
+} from "../controller/report.js";
 
 const router = Router();
 
-// пользователь → каналы → отзывы
-router.get("/channels/reports", authRequired, getUserChannelsReports);
+router.get("/reports/channels", authRequired, getUserChannelsReports);
+router.get("/reports/stats", authRequired, getAppealsStats);
+router.get("/reports/summary", authRequired, getAppealsAiSummary);
+router.post("/channels/:channelId/resume", authRequired, resumeChannelProcessing);
 
 export default router;

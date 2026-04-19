@@ -5,6 +5,8 @@
   <meta charset="UTF-8">
   <title>CLAIR — Безопасность</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="../scripts/config.js"></script>
+  <script src="../scripts/common.js"></script>
 
   <style>
     * {
@@ -21,7 +23,7 @@
     }
 
     body {
-      background: #1E1F26;
+      background: url("../assets/img/wallpaper.webp") no-repeat center center fixed;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -116,11 +118,6 @@
   <div class="container">
 
     <div id="header"></div>
-    <script>
-      fetch("../main/partials/header.html")
-        .then(r => r.text())
-        .then(html => { document.getElementById("header").innerHTML = html; });
-    </script>
 
     <main>
       <h1 class="page-title">Безопасность</h1>
@@ -132,43 +129,40 @@
         <div class="option-card">
           <h3>Смена логина</h3>
           <p>Измените текущий логин для входа в систему.</p>
-          <button>Изменить логин</button>
+          <button onclick="window.location.href='change-login.html'">Изменить логин</button>
         </div>
 
         <div class="option-card">
           <h3>Смена пароля</h3>
           <p>Рекомендуется менять пароль каждые 90 дней.</p>
-          <button>Изменить пароль</button>
+          <button onclick="window.location.href='change-password.html'">Изменить пароль</button>
         </div>
 
         <div class="option-card">
           <h3>История входов</h3>
           <p>Просмотрите последние попытки входа в систему.</p>
-          <button>Открыть историю</button>
-        </div>
-
-        <div class="option-card">
-          <h3>Двухфакторная аутентификация</h3>
-          <p>Добавьте второй фактор (SMS или приложение), чтобы повысить уровень защиты.</p>
-          <button>Настроить 2FA</button>
+          <button onclick="window.location.href='login-history.html'">Открыть историю</button>
         </div>
 
         <div class="option-card">
           <h3>Вход в страницу</h3>
           <p>Настройте параметры входа: всегда запрашивать пароль, запомнить устройство или автоматический вход.</p>
-          <button>Настроить вход</button>
+          <button onclick="window.location.href='entry-settings.html'">Настроить вход</button>
         </div>
       </div>
     </main>
 
     <div id="footer"></div>
-    <script>
-      fetch("../main/partials/footer.html")
-        .then(r => r.text())
-        .then(html => { document.getElementById("footer").innerHTML = html; });
-    </script>
+
 
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      loadHeader();
+      loadFooter();
+    });
+  </script>
 
 </body>
 
